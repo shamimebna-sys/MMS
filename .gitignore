@@ -32,6 +32,14 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# local data, legacy dumps, and generated client
+/data
+/docs/db.txt
+/docs/*.sql
+/.tools
+/src/generated
 
 # vercel
 .vercel

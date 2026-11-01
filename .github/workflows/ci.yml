@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mms
+          POSTGRES_PASSWORD: mms_ci
+          POSTGRES_DB: mms_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mms -d mms_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://mms:mms_ci@127.0.0.1:5432/mms_ci
+      DATABASE_URL_TEST: postgresql://mms:mms_ci@127.0.0.1:5432/mms_ci
+      AUTH_SECRET: ci-secret-at-least-32-characters-long
+      AUTH_ISSUER: mms
+      AUTH_AUDIENCE: mms-web
+      MMS_ALLOW_MIGRATION: local-dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npx tsc --noEmit
+      - run: npx eslint .
+      - run: npx vitest run
+      - run: npx next build

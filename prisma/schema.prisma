@@ -1,0 +1,1757 @@
+// Generated from the legacy MariaDB dump. Do not hand-edit column mappings
+// without updating docs/legacy/column-catalog.json via scripts/legacy/build-prisma.mjs.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Agencier {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(255)
+  email String? @db.VarChar(255)
+  mobile String? @db.VarChar(255)
+  licenseNo String? @map("license_no") @db.VarChar(255)
+  vatNo String? @map("vat_no") @db.VarChar(255)
+  address String? @db.VarChar(255)
+  balance Decimal? @db.Decimal(15, 4)
+  logo String? @db.Text
+  status String? @db.Char(5)
+  countryId Int? @map("country_id")
+  ownerName String? @map("owner_name") @db.VarChar(255)
+  ownerMobile String? @map("owner_mobile") @db.VarChar(255)
+  ownerEmail String? @map("owner_email") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  signature String? @db.Text
+  bankAccountName String? @map("bank_account_name") @db.VarChar(200)
+  bankAccountNo String? @map("bank_account_no") @db.VarChar(200)
+  bankName String? @map("bank_name") @db.VarChar(200)
+  bankBranchName String? @map("bank_branch_name") @db.VarChar(200)
+  bankIbanNo String? @map("bank_iban_no") @db.VarChar(200)
+  bankSwiftNo String? @map("bank_swift_no") @db.VarChar(200)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([countryId])
+  @@map("agenciers")
+}
+
+model Agency {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  address String? @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  candidateId Int? @map("candidate_id")
+  @@index([candidateId])
+  @@map("agencies")
+}
+
+model Agent {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(100)
+  email String? @db.VarChar(250)
+  secondaryEmail String? @map("secondary_email") @db.VarChar(250)
+  mobile String? @db.VarChar(250)
+  secondaryMobile String? @map("secondary_mobile") @db.VarChar(250)
+  emergencyMobile String? @map("emergency_mobile") @db.VarChar(250)
+  bid String? @db.VarChar(250)
+  bidFilePath String? @map("bid_file_path") @db.VarChar(255)
+  nid String? @db.VarChar(250)
+  nidFilePath String? @map("nid_file_path") @db.VarChar(255)
+  passportNo String? @map("passport_no") @db.VarChar(250)
+  passportIssueDate DateTime? @map("passport_issue_date") @db.Date
+  passportExpireDate DateTime? @map("passport_expire_date") @db.Date
+  passportFilePath String? @map("passport_file_path") @db.VarChar(250)
+  dob DateTime? @db.Date
+  fullPhotoFilePath String? @map("full_photo_file_path") @db.VarChar(255)
+  halfPhotoFilePath String? @map("half_photo_file_path") @db.VarChar(255)
+  fatherName String? @map("father_name") @db.VarChar(50)
+  motherName String? @map("mother_name") @db.VarChar(50)
+  nationality String? @db.VarChar(20)
+  gender String? @db.VarChar(20)
+  bloodGroup String? @map("blood_group") @db.VarChar(20)
+  presentAddressHouse String? @map("present_address_house") @db.VarChar(200)
+  presentAddressRoad String? @map("present_address_road") @db.VarChar(20)
+  presentAddressVillage String? @map("present_address_village") @db.VarChar(20)
+  presentAddressPost String? @map("present_address_post") @db.VarChar(20)
+  presentAddressThanaId Int? @map("present_address_thana_id")
+  presentAddressDistrictId Int? @map("present_address_district_id")
+  presentAddressDivisionId Int? @map("present_address_division_id")
+  permanentAddressHouse String? @map("permanent_address_house") @db.VarChar(200)
+  permanentAddressRoad String? @map("permanent_address_road") @db.VarChar(20)
+  permanentAddressVillage String? @map("permanent_address_village") @db.VarChar(20)
+  permanentAddressPost String? @map("permanent_address_post") @db.VarChar(20)
+  permanentAddressThanaId Int? @map("permanent_address_thana_id")
+  permanentAddressDistrictId Int? @map("permanent_address_district_id")
+  permanentAddressDivisionId Int? @map("permanent_address_division_id")
+  basicInfoCareer String? @map("basic_info_career") @db.VarChar(250)
+  basicInfoSpecial String? @map("basic_info_special") @db.VarChar(250)
+  otherSkills String? @map("other_skills") @db.VarChar(250)
+  balance Decimal? @db.Decimal(24, 8)
+  cvFilePath String? @map("cv_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([presentAddressThanaId])
+  @@index([presentAddressDistrictId])
+  @@index([presentAddressDivisionId])
+  @@index([permanentAddressThanaId])
+  @@index([permanentAddressDistrictId])
+  @@index([permanentAddressDivisionId])
+  @@map("agents")
+}
+
+model Announcement {
+  id Int @id @default(autoincrement())
+  groupId String? @map("group_id") @db.VarChar(250)
+  topic String? @db.VarChar(250)
+  message String? @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  anounceDate DateTime? @map("anounce_date") @db.Date
+  anounceDateEnd DateTime? @map("anounce_date_end") @db.Date
+  filePath String? @map("file_path") @db.VarChar(255)
+  @@index([groupId])
+  @@map("announcements")
+}
+
+model AnnouncementClassGroup {
+  id Int @id @default(autoincrement())
+  announcementId Int? @map("announcement_id")
+  classGroupId Int? @map("class_group_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([announcementId])
+  @@index([classGroupId])
+  @@map("announcement_class_groups")
+}
+
+model Arc {
+  id Int @id @default(autoincrement())
+  issueDate DateTime? @map("issue_date") @db.Date
+  expireDate DateTime? @map("expire_date") @db.Date
+  isLifetime String? @map("is_lifetime") @db.Char(5)
+  status String? @db.Char(5)
+  candidateId Int? @map("candidate_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  acrFilePath String? @map("acr_file_path") @db.VarChar(255)
+  arcNumber String? @map("arc_number") @db.VarChar(255)
+  @@index([candidateId])
+  @@map("arcs")
+}
+
+model AttributeList {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  attributeName String? @map("attribute_name") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([userId])
+  @@map("attribute_list")
+}
+
+model Candidate {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(100)
+  email String? @db.VarChar(250)
+  secondaryEmail String? @map("secondary_email") @db.VarChar(250)
+  mobile String? @db.VarChar(250)
+  secondaryMobile String? @map("secondary_mobile") @db.VarChar(250)
+  emergencyMobile String? @map("emergency_mobile") @db.VarChar(250)
+  bid String? @db.VarChar(250)
+  bidFilePath String? @map("bid_file_path") @db.Text
+  nid String? @db.VarChar(250)
+  nidFilePath String? @map("nid_file_path") @db.VarChar(255)
+  passportNo String? @map("passport_no") @db.VarChar(250)
+  passportIssueDate DateTime? @map("passport_issue_date") @db.Date
+  passportExpireDate DateTime? @map("passport_expire_date") @db.Date
+  passportFilePath String? @map("passport_file_path") @db.Text
+  dob DateTime? @db.Date
+  fullPhotoFilePath String? @map("full_photo_file_path") @db.Text
+  halfPhotoFilePath String? @map("half_photo_file_path") @db.Text
+  fatherName String? @map("father_name") @db.VarChar(250)
+  motherName String? @map("mother_name") @db.VarChar(250)
+  nationality String? @db.VarChar(250)
+  gender String? @db.VarChar(20)
+  bloodGroup String? @map("blood_group") @db.VarChar(20)
+  presentAddressHouse String? @map("present_address_house") @db.VarChar(200)
+  presentAddressRoad String? @map("present_address_road") @db.VarChar(20)
+  presentAddressVillage String? @map("present_address_village") @db.VarChar(20)
+  presentAddressPost String? @map("present_address_post") @db.VarChar(20)
+  presentAddressThanaId Int? @map("present_address_thana_id")
+  presentAddressDistrictId Int? @map("present_address_district_id")
+  presentAddressDivisionId Int? @map("present_address_division_id")
+  permanentAddressHouse String? @map("permanent_address_house") @db.VarChar(200)
+  permanentAddressRoad String? @map("permanent_address_road") @db.VarChar(20)
+  permanentAddressVillage String? @map("permanent_address_village") @db.VarChar(20)
+  permanentAddressPost String? @map("permanent_address_post") @db.VarChar(20)
+  permanentAddressThanaId Int? @map("permanent_address_thana_id")
+  permanentAddressDistrictId Int? @map("permanent_address_district_id")
+  permanentAddressDivisionId Int? @map("permanent_address_division_id")
+  basicInfoCareer String? @map("basic_info_career") @db.Text
+  basicInfoSpecial String? @map("basic_info_special") @db.Text
+  otherSkills String? @map("other_skills") @db.Text
+  balance Decimal? @db.Decimal(15, 4)
+  cvFilePath String? @map("cv_file_path") @db.Text
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  agentId Int? @map("agent_id")
+  classGroupId Int? @map("class_group_id")
+  remarks String? @db.VarChar(255)
+  replacementRemarks String? @map("replacement_remarks") @db.Text
+  admissionPaymentId Int? @map("admission_payment_id")
+  finalGroupPaymentId Int? @map("final_group_payment_id")
+  medicalFeePaymentId Int? @map("medical_fee_payment_id")
+  abroadEx Int? @map("abroad_ex")
+  localEx Int? @map("local_ex")
+  driveLink String? @map("drive_link") @db.VarChar(250)
+  facebookLink String? @map("facebook_link") @db.VarChar(250)
+  youtubeLink String? @map("youtube_link") @db.VarChar(250)
+  linkedinLink String? @map("linkedin_link") @db.Text
+  twitterLink String? @map("twitter_link") @db.VarChar(250)
+  instagramLink String? @map("instagram_link") @db.VarChar(250)
+  position String? @db.VarChar(250)
+  skillCertificateFilePath String? @map("skill_certificate_file_path") @db.Text
+  height String? @db.VarChar(100)
+  weight String? @db.VarChar(100)
+  maritalStatus String? @map("marital_status") @db.VarChar(100)
+  expertise String? @db.Text
+  skills String? @db.Text
+  extraCurricular String? @map("extra_curricular") @db.Text
+  interest String? @db.Text
+  attribute String? @db.Text
+  companierId Int? @map("companier_id")
+  agencierId Int? @map("agencier_id")
+  stampFilePath String? @map("stamp_file_path") @db.Text
+  positionId Int? @map("position_id")
+  companyStatus String? @map("company_status") @db.VarChar(200)
+  subAgentId Int? @map("sub_agent_id")
+  countryId Int? @map("country_id")
+  replacedByCandidateId Int? @map("replaced_by_candidate_id")
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  replacedByCandidateIdRef Candidate? @relation("Candidate_replacedByCandidateId", fields: [replacedByCandidateId], references: [id], onDelete: SetNull)
+  @@index([createdAt])
+  @@index([agentId])
+  @@index([classGroupId])
+  @@index([companierId])
+  @@index([agencierId])
+  @@index([replacedByCandidateId])
+  @@index([presentAddressThanaId])
+  @@index([presentAddressDistrictId])
+  @@index([presentAddressDivisionId])
+  @@index([permanentAddressThanaId])
+  @@index([permanentAddressDistrictId])
+  @@index([permanentAddressDivisionId])
+  @@index([admissionPaymentId])
+  @@index([finalGroupPaymentId])
+  @@index([medicalFeePaymentId])
+  @@index([positionId])
+  @@index([subAgentId])
+  @@index([countryId])
+  candidateLinks0 Candidate[] @relation("Candidate_replacedByCandidateId")
+  @@map("candidates")
+}
+
+model CandidateDocument {
+  id Int @id @default(autoincrement())
+  candidateId Int? @map("candidate_id")
+  documentTypeId Int? @map("document_type_id")
+  documentNo String? @map("document_no") @db.VarChar(255)
+  issueType String? @map("issue_type") @db.VarChar(255)
+  issueDate DateTime? @map("issue_date") @db.Date
+  expireDate DateTime? @map("expire_date") @db.Date
+  reason String? @db.VarChar(255)
+  filePath String? @map("file_path") @db.VarChar(255)
+  status String? @db.Char(5)
+  createdBy Int? @map("created_by")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([candidateId])
+  @@index([documentTypeId])
+  @@map("candidate_documents")
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  parentId Int? @map("parent_id")
+  sortOrder Int @map("order")
+  name String @db.VarChar(255)
+  slug String @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  parentIdRef Category? @relation("Category_parentId", fields: [parentId], references: [id], onDelete: SetNull)
+  @@unique([slug])
+  @@index([parentId])
+  categoryLinks0 Category[] @relation("Category_parentId")
+  @@map("categories")
+}
+
+model ClassGroup {
+  id Int @id @default(autoincrement())
+  name String? @db.VarChar(250)
+  description String? @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  code String? @db.VarChar(255)
+  feeAmount Decimal? @map("fee_amount") @db.Decimal(15, 4)
+  @@map("class_groups")
+}
+
+model ClassSchedule {
+  id Int @id @default(autoincrement())
+  teacherId Int? @map("teacher_id")
+  classGroupId Int? @map("class_group_id")
+  subject String? @db.VarChar(255)
+  startTime String? @map("start_time") @db.VarChar(16)
+  endTime String? @map("end_time") @db.VarChar(16)
+  weekDay String? @map("week_day") @db.VarChar(255)
+  status String? @db.Char(1)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  updatedBy Int? @map("updated_by")
+  @@index([teacherId])
+  @@index([classGroupId])
+  @@map("class_schedules")
+}
+
+model Companier {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(255)
+  email String? @db.VarChar(255)
+  mobile String? @db.VarChar(255)
+  licenseNo String? @map("license_no") @db.VarChar(255)
+  vatNo String? @map("vat_no") @db.VarChar(255)
+  address String? @db.VarChar(255)
+  balance Decimal? @db.Decimal(15, 4)
+  logo String? @db.Text
+  status String? @db.Char(5)
+  countryId Int? @map("country_id")
+  ownerName String? @map("owner_name") @db.VarChar(255)
+  ownerMobile String? @map("owner_mobile") @db.VarChar(255)
+  ownerEmail String? @map("owner_email") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([countryId])
+  @@map("companiers")
+}
+
+model Company {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  address String? @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  candidateId Int? @map("candidate_id")
+  @@index([candidateId])
+  @@map("companies")
+}
+
+model Country {
+  id Int @id @default(autoincrement())
+  iso String @db.Char(2)
+  name String @db.VarChar(80)
+  codeName String @map("code_name") @db.VarChar(80)
+  iso3 String? @db.Char(3)
+  numCode Int? @map("num_code")
+  phoneCode Int @map("phone_code")
+  @@map("countries")
+}
+
+model Currency {
+  id Int @id @default(autoincrement())
+  fullName String @map("full_name") @db.VarChar(255)
+  status String? @db.Char(1)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  shortName String? @map("short_name") @db.VarChar(255)
+  symbol String? @db.VarChar(255)
+  position String? @db.VarChar(255)
+  @@map("currencies")
+}
+
+model CurricularList {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  curricularName String? @map("curricular_name") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([userId])
+  @@map("curricular_list")
+}
+
+model DataRow {
+  id Int @id @default(autoincrement())
+  dataTypeId Int @map("data_type_id")
+  field String @db.VarChar(255)
+  type String @db.VarChar(255)
+  displayName String @map("display_name") @db.VarChar(255)
+  required Int
+  browse Int
+  read Int
+  edit Int
+  add Int
+  delete Int
+  details String? @db.Text
+  sortOrder Int @map("order")
+  dataTypeIdRef DataType @relation("DataRow_dataTypeId", fields: [dataTypeId], references: [id], onDelete: Cascade)
+  @@index([dataTypeId])
+  @@map("data_rows")
+}
+
+model DataType {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  slug String @db.VarChar(255)
+  displayNameSingular String @map("display_name_singular") @db.VarChar(255)
+  displayNamePlural String @map("display_name_plural") @db.VarChar(255)
+  icon String? @db.VarChar(255)
+  modelName String? @map("model_name") @db.VarChar(255)
+  policyName String? @map("policy_name") @db.VarChar(255)
+  controller String? @db.VarChar(255)
+  description String? @db.VarChar(255)
+  generatePermissions Int @map("generate_permissions")
+  serverSide Int @map("server_side")
+  details String? @db.Text
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@unique([name])
+  @@unique([slug])
+  dataRowLinks0 DataRow[] @relation("DataRow_dataTypeId")
+  @@map("data_types")
+}
+
+model District {
+  id Int @id @default(autoincrement())
+  divisionId Int? @map("division_id")
+  name String @db.VarChar(25)
+  bnName String @map("bn_name") @db.VarChar(25)
+  lat String? @db.VarChar(15)
+  lon String? @db.VarChar(15)
+  url String @db.VarChar(50)
+  verificationStatus String @default("source") @map("verification_status") @db.VarChar(40)
+  @@index([divisionId])
+  @@map("districts")
+}
+
+model Division {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(25)
+  bnName String @map("bn_name") @db.VarChar(25)
+  url String @db.VarChar(50)
+  @@map("divisions")
+}
+
+model DocumentType {
+  id Int @id @default(autoincrement())
+  name String? @db.VarChar(255)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  serialNo Int? @map("serial_no")
+  @@map("document_types")
+}
+
+model Education {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  examName String? @map("exam_name") @db.VarChar(250)
+  instituteName String? @map("institute_name") @db.VarChar(250)
+  subjectGroupMajor String? @map("subject_group_major") @db.VarChar(250)
+  educationLabel String? @map("education_label") @db.VarChar(250)
+  startDate DateTime? @map("start_date") @db.Date
+  endDate DateTime? @map("end_date") @db.Date
+  durationYear Int? @map("duration_year")
+  resultType String? @map("result_type") @db.VarChar(250)
+  result String? @db.VarChar(250)
+  achievements String? @db.VarChar(250)
+  certificateFilePath String? @map("certificate_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  boardName String? @map("board_name") @db.VarChar(200)
+  scale String? @db.VarChar(200)
+  passingYear String? @map("passing_year") @db.VarChar(200)
+  @@index([userId])
+  @@map("educations")
+}
+
+model Employee {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(250)
+  email String? @db.VarChar(250)
+  mobile String? @db.VarChar(255)
+  nid String? @db.VarChar(255)
+  nidFilePath String? @map("nid_file_path") @db.VarChar(255)
+  passportNo String? @map("passport_no") @db.VarChar(255)
+  passportIssueDate DateTime? @map("passport_issue_date") @db.Date
+  passportExpireDate DateTime? @map("passport_expire_date") @db.Date
+  passportFilePath String? @map("passport_file_path") @db.VarChar(255)
+  dob DateTime? @db.Date
+  fullPhotoFilePath String? @map("full_photo_file_path") @db.VarChar(255)
+  halfPhotoFilePath String? @map("half_photo_file_path") @db.VarChar(255)
+  fatherName String? @map("father_name") @db.VarChar(255)
+  motherName String? @map("mother_name") @db.VarChar(255)
+  nationality String? @db.VarChar(255)
+  gender String? @db.VarChar(255)
+  bloodGroup String? @map("blood_group") @db.VarChar(255)
+  presentAddressHouse String? @map("present_address_house") @db.VarChar(200)
+  permanentAddressHouse String? @map("permanent_address_house") @db.VarChar(200)
+  cvFilePath String? @map("cv_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@map("employees")
+}
+
+model Employer {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(250)
+  email String? @db.VarChar(250)
+  mobile String? @db.VarChar(255)
+  nid String? @db.VarChar(255)
+  nidFilePath String? @map("nid_file_path") @db.VarChar(255)
+  passportNo String? @map("passport_no") @db.VarChar(255)
+  passportIssueDate DateTime? @map("passport_issue_date") @db.Date
+  passportExpireDate DateTime? @map("passport_expire_date") @db.Date
+  passportFilePath String? @map("passport_file_path") @db.VarChar(255)
+  dob DateTime? @db.Date
+  fullPhotoFilePath String? @map("full_photo_file_path") @db.VarChar(255)
+  halfPhotoFilePath String? @map("half_photo_file_path") @db.VarChar(255)
+  fatherName String? @map("father_name") @db.VarChar(255)
+  motherName String? @map("mother_name") @db.VarChar(255)
+  nationality String? @db.VarChar(255)
+  gender String? @db.VarChar(255)
+  bloodGroup String? @map("blood_group") @db.VarChar(255)
+  presentAddressHouse String? @map("present_address_house") @db.VarChar(200)
+  permanentAddressHouse String? @map("permanent_address_house") @db.VarChar(200)
+  cvFilePath String? @map("cv_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@map("employers")
+}
+
+model EmployerCandidate {
+  id Int @id @default(autoincrement())
+  employerId Int? @map("employer_id")
+  candidateId Int? @map("candidate_id")
+  purpose String? @db.VarChar(100)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([employerId])
+  @@index([candidateId])
+  @@map("employer_candidates")
+}
+
+model EuroToBdtRate {
+  id Int @id @default(autoincrement())
+  conversionDate DateTime? @map("conversion_date") @db.Date
+  euroRate Decimal? @map("euro_rate") @db.Decimal(18, 6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  refLink String? @map("ref_link") @db.VarChar(255)
+  description String? @db.VarChar(255)
+  @@map("euro_to_bdt_rates")
+}
+
+model Exam {
+  id Int @id @default(autoincrement())
+  name String? @db.Text
+  examDate DateTime? @map("exam_date") @db.Date
+  examTime String? @map("exam_time") @db.VarChar(16)
+  classGroupId String? @map("class_group_id") @db.VarChar(200)
+  status String? @db.Char(5)
+  remarks String? @db.Text
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  examLink String? @map("exam_link") @db.Text
+  @@index([classGroupId])
+  @@map("exams")
+}
+
+model ExamResult {
+  id Int @id @default(autoincrement())
+  examId Int? @map("exam_id")
+  candidateId Int? @map("candidate_id")
+  abroadEx Int? @map("abroad_ex")
+  localEx Int? @map("local_ex")
+  bl Int?
+  skill Int?
+  english Int?
+  classGroupId String? @map("class_group_id") @db.VarChar(200)
+  result String? @db.Char(5)
+  remarks String? @db.VarChar(255)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([examId])
+  @@index([candidateId])
+  @@index([classGroupId])
+  @@map("exam_results")
+}
+
+model Experience {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  companyName String? @map("company_name") @db.VarChar(250)
+  companyAddress String? @map("company_address") @db.VarChar(250)
+  countryId String? @map("country_id") @db.VarChar(250)
+  designation String? @db.VarChar(250)
+  department String? @db.VarChar(250)
+  startDate DateTime? @map("start_date") @db.Date
+  endDate DateTime? @map("end_date") @db.Date
+  responsibilities String? @db.Text
+  expertise String? @db.Text
+  descriptions String? @db.Text
+  achievements String? @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  @@index([userId])
+  @@index([countryId])
+  @@map("experiences")
+}
+
+model ExpertiseList {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  expertiseName String? @map("expertise_name") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([userId])
+  @@map("expertise_list")
+}
+
+model FlightSchedule {
+  id Int @id @default(autoincrement())
+  airlineceName String? @map("airlinece_name") @db.VarChar(255)
+  flightDate DateTime? @map("flight_date") @db.Date
+  flightTime String? @map("flight_time") @db.VarChar(16)
+  ticketFilePath String? @map("ticket_file_path") @db.VarChar(255)
+  arrivalSealPageFilePath String? @map("arrival_seal_page_file_path") @db.VarChar(255)
+  candidateId Int? @map("candidate_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  departureTime String? @map("departure_time") @db.VarChar(16)
+  arrivalTime String? @map("arrival_time") @db.VarChar(16)
+  @@index([candidateId])
+  @@map("flight_schedules")
+}
+
+model InterestList {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  interestName String? @map("interest_name") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([userId])
+  @@map("interest_list")
+}
+
+model Invoice {
+  id Int @id @default(autoincrement())
+  invoiceNo String? @map("invoice_no") @db.VarChar(100)
+  issueDate DateTime? @map("issue_date") @db.Date
+  agenciersId Int? @map("agenciers_id")
+  companierId Int? @map("companier_id")
+  service String? @db.VarChar(100)
+  countryId Int? @map("country_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  ownerName String? @map("owner_name") @db.VarChar(255)
+  status String? @db.Char(5)
+  bankAccountName String? @map("bank_account_name") @db.VarChar(250)
+  bankAccountNo String? @map("bank_account_no") @db.VarChar(250)
+  bankName String? @map("bank_name") @db.VarChar(250)
+  bankBranchName String? @map("bank_branch_name") @db.VarChar(250)
+  bankSwiftNo String? @map("bank_swift_no") @db.VarChar(250)
+  bankIbanNo String? @map("bank_iban_no") @db.VarChar(250)
+  oldInvoiceNo String? @map("old_invoice_no") @db.VarChar(200)
+  @@index([agenciersId])
+  @@index([companierId])
+  @@index([countryId])
+  @@map("invoices")
+}
+
+model InvoiceCandidate {
+  id Int @id @default(autoincrement())
+  invoiceId Int? @map("invoice_id")
+  candidateId Int? @map("candidate_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([invoiceId])
+  @@index([candidateId])
+  @@map("invoice_candidates")
+}
+
+model InvoiceHead {
+  id Int @id @default(autoincrement())
+  description String? @db.VarChar(100)
+  vatRate Decimal? @map("vat_rate") @db.Decimal(18, 6)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@map("invoice_heads")
+}
+
+model InvoiceLine {
+  id Int @id @default(autoincrement())
+  invoiceId Int? @map("invoice_id")
+  invoiceHeadId Int? @map("invoice_head_id")
+  description String? @db.VarChar(100)
+  quantity Int?
+  unitPrice Decimal? @map("unit_price") @db.Decimal(15, 4)
+  subTotalAmount Decimal? @map("sub_total_amount") @db.Decimal(15, 4)
+  vatRate Decimal? @map("vat_rate") @db.Decimal(18, 6)
+  vatAmount Decimal? @map("vat_amount") @db.Decimal(15, 4)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  totalAmount Decimal? @map("total_amount") @db.Decimal(15, 4)
+  @@index([invoiceId])
+  @@index([invoiceHeadId])
+  @@map("invoice_lines")
+}
+
+model InvoiceMoneyReceipt {
+  id Int @id @default(autoincrement())
+  invoiceId Int? @map("invoice_id")
+  receiptNo String? @map("receipt_no") @db.VarChar(100)
+  receivedFrom String? @map("received_from") @db.VarChar(255)
+  hotel String? @db.VarChar(255)
+  amount Decimal? @db.Decimal(15, 4)
+  receivedFor String? @map("received_for") @db.VarChar(255)
+  receiptDate DateTime? @map("receipt_date") @db.Date
+  recipient String? @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  paymentMethod String? @map("payment_method") @db.VarChar(255)
+  transactionNo String? @map("transaction_no") @db.VarChar(255)
+  @@index([invoiceId])
+  @@map("invoice_money_receipts")
+}
+
+model LabourContract {
+  id Int @id @default(autoincrement())
+  issueDate DateTime? @map("issue_date") @db.Date
+  expireDate DateTime? @map("expire_date") @db.Date
+  documentFilePath String? @map("document_file_path") @db.VarChar(255)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  candidateId Int? @map("candidate_id")
+  @@index([candidateId])
+  @@map("labour_contracts")
+}
+
+model LanguageList {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  languageName String? @map("language_name") @db.VarChar(255)
+  languageStatus String? @map("language_status") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([userId])
+  @@map("language_list")
+}
+
+model License {
+  id Int @id @default(autoincrement())
+  licenseNo String @map("license_no") @db.VarChar(255)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  companierId Int? @map("companier_id")
+  licenseStartDate DateTime? @map("license_start_date") @db.Date
+  licenseExpireDate DateTime? @map("license_expire_date") @db.Date
+  licenseFilePath String? @map("license_file_path") @db.Text
+  @@unique([licenseNo])
+  @@index([companierId])
+  @@map("licenses")
+}
+
+model LicensePosition {
+  id Int @id @default(autoincrement())
+  licenseId Int @map("license_id")
+  positionId Int @map("position_id")
+  quantity Int?
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([licenseId])
+  @@index([positionId])
+  @@map("license_positions")
+}
+
+model LiveStatus {
+  id Int @id @default(autoincrement())
+  name String? @db.VarChar(255)
+  description String? @db.VarChar(255)
+  stepNo Int? @map("step_no")
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@map("live_status")
+}
+
+model ManpowerTraining {
+  id Int @id @default(autoincrement())
+  candidateId Int @map("candidate_id")
+  certificateIssueDate DateTime? @map("certificate_issue_date") @db.Date
+  certificateExpireDate DateTime? @map("certificate_expire_date") @db.Date
+  certificateFilePath String? @map("certificate_file_path") @db.VarChar(250)
+  manpowerFilePath String? @map("manpower_file_path") @db.VarChar(250)
+  fingerPrintFilePath String? @map("finger_print_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  trainingStartDate DateTime? @map("training_start_date") @db.Date
+  trainingEndDate DateTime? @map("training_end_date") @db.Date
+  @@index([candidateId])
+  @@map("manpower_trainings")
+}
+
+model Medical {
+  id Int @id @default(autoincrement())
+  issueDate DateTime? @map("issue_date") @db.Date
+  expireDate DateTime? @map("expire_date") @db.Date
+  status String? @db.Char(5)
+  documentFilePath String? @map("document_file_path") @db.VarChar(255)
+  candidateId Int? @map("candidate_id")
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  countryId Int? @map("country_id")
+  @@index([candidateId])
+  @@index([countryId])
+  @@map("medicals")
+}
+
+model Menu {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@unique([name])
+  menuItemLinks0 MenuItem[] @relation("MenuItem_menuId")
+  @@map("menus")
+}
+
+model MenuItem {
+  id Int @id @default(autoincrement())
+  menuId Int? @map("menu_id")
+  title String @db.VarChar(255)
+  url String @db.VarChar(255)
+  target String @db.VarChar(255)
+  iconClass String? @map("icon_class") @db.VarChar(255)
+  color String? @db.VarChar(255)
+  parentId Int? @map("parent_id")
+  sortOrder Int @map("order")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  route String? @db.VarChar(255)
+  parameters String? @db.Text
+  menuIdRef Menu? @relation("MenuItem_menuId", fields: [menuId], references: [id], onDelete: Cascade)
+  @@index([menuId])
+  @@index([parentId])
+  @@map("menu_items")
+}
+
+model Notification {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  title String? @db.Text
+  message String? @db.Text
+  redirectUrl String? @map("redirect_url") @db.VarChar(255)
+  isSeen String? @map("is_seen") @db.Char(5)
+  groupId Int? @map("group_id")
+  code String? @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([userId])
+  @@index([groupId])
+  @@map("notifications")
+}
+
+model NotificationClassGroup {
+  id Int @id @default(autoincrement())
+  notificationId Int? @map("notification_id")
+  classGroupId Int? @map("class_group_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([notificationId])
+  @@index([classGroupId])
+  @@map("notification_class_groups")
+}
+
+model Page {
+  id Int @id @default(autoincrement())
+  authorId Int @map("author_id")
+  title String @db.VarChar(255)
+  excerpt String? @db.Text
+  body String? @db.Text
+  image String? @db.VarChar(255)
+  slug String @db.VarChar(255)
+  metaDescription String? @map("meta_description") @db.Text
+  metaKeywords String? @map("meta_keywords") @db.Text
+  status String @db.Text
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@unique([slug])
+  @@index([authorId])
+  @@map("pages")
+}
+
+model Payment {
+  id Int @id @default(autoincrement())
+  title String? @db.VarChar(250)
+  type String? @db.Char(50)
+  agentId Int? @map("agent_id")
+  subAgentId Int? @map("sub_agent_id")
+  candidateId Int? @map("candidate_id")
+  teacherId Int? @map("teacher_id")
+  employeeId Int? @map("employee_id")
+  employerId Int? @map("employer_id")
+  amount Decimal? @db.Decimal(15, 4)
+  paymentDate DateTime? @map("payment_date") @db.Date
+  invoiceNo String? @map("invoice_no") @db.VarChar(250)
+  bankName String? @map("bank_name") @db.VarChar(250)
+  accNo String? @map("acc_no") @db.VarChar(250)
+  trxNo String? @map("trx_no") @db.VarChar(250)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  userId Int? @map("user_id")
+  chequeFilePath String? @map("cheque_file_path") @db.VarChar(255)
+  remarks String? @db.VarChar(255)
+  accountName String? @map("account_name") @db.VarChar(255)
+  currencyId Int? @map("currency_id")
+  exchangeRate Decimal? @map("exchange_rate") @db.Decimal(18, 6)
+  paymentMethod String? @map("payment_method") @db.VarChar(255)
+  paymentReceiver String? @map("payment_receiver") @db.VarChar(255)
+  paymentReceivedLocation String? @map("payment_received_location") @db.VarChar(255)
+  paymentTime String? @map("payment_time") @db.VarChar(16)
+  description String? @db.Text
+  requestId Int? @map("request_id")
+  devRemarks String? @map("dev_remarks") @db.VarChar(250)
+  @@index([agentId])
+  @@index([subAgentId])
+  @@index([candidateId])
+  @@index([teacherId])
+  @@index([employeeId])
+  @@index([employerId])
+  @@index([userId])
+  @@index([currencyId])
+  @@index([requestId])
+  @@map("payments")
+}
+
+model PaymentRequest {
+  id Int @id @default(autoincrement())
+  billTitle String? @map("bill_title") @db.VarChar(255)
+  agentId Int? @map("agent_id")
+  groupId Int? @map("group_id")
+  candidateId Int? @map("candidate_id")
+  amount Decimal? @db.Decimal(15, 4)
+  status String? @db.Char(5)
+  paymentId Int? @map("payment_id")
+  remarks String? @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([agentId])
+  @@index([groupId])
+  @@index([candidateId])
+  @@index([paymentId])
+  @@map("payment_requests")
+}
+
+model Permission {
+  id Int @id @default(autoincrement())
+  key String @db.VarChar(255)
+  tableName String? @map("table_name") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([key])
+  permissionRoleLinks0 PermissionRole[] @relation("PermissionRole_permissionId")
+  @@map("permissions")
+}
+
+model PermissionRole {
+  permissionId Int @map("permission_id")
+  roleId Int @map("role_id")
+  permissionIdRef Permission @relation("PermissionRole_permissionId", fields: [permissionId], references: [id], onDelete: Cascade)
+  roleIdRef Role @relation("PermissionRole_roleId", fields: [roleId], references: [id], onDelete: Cascade)
+  @@id([permissionId, roleId])
+  @@index([permissionId])
+  @@index([roleId])
+  @@map("permission_role")
+}
+
+model PoliceClearance {
+  id Int @id @default(autoincrement())
+  candidateId Int @map("candidate_id")
+  thanaId Int? @map("thana_id")
+  issueDate DateTime? @map("issue_date") @db.Date
+  expireDate DateTime? @map("expire_date") @db.Date
+  photoFilePath String? @map("photo_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  countryId Int? @map("country_id")
+  @@index([candidateId])
+  @@index([thanaId])
+  @@index([countryId])
+  @@map("police_clearances")
+}
+
+model Position {
+  id Int @id @default(autoincrement())
+  title String @db.VarChar(255)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@map("positions")
+}
+
+model Post {
+  id Int @id @default(autoincrement())
+  authorId Int @map("author_id")
+  categoryId Int? @map("category_id")
+  title String @db.VarChar(255)
+  seoTitle String? @map("seo_title") @db.VarChar(255)
+  excerpt String? @db.Text
+  body String @db.Text
+  image String? @db.VarChar(255)
+  slug String @db.VarChar(255)
+  metaDescription String? @map("meta_description") @db.Text
+  metaKeywords String? @map("meta_keywords") @db.Text
+  status String @db.Text
+  featured Int
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@unique([slug])
+  @@index([authorId])
+  @@index([categoryId])
+  @@map("posts")
+}
+
+model ProfessionalCertificate {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  title String? @db.VarChar(250)
+  instituteName String? @map("institute_name") @db.VarChar(250)
+  topics String? @db.VarChar(250)
+  startDate DateTime? @map("start_date") @db.Date
+  endDate DateTime? @map("end_date") @db.Date
+  duration Int?
+  durationType String? @map("duration_type") @db.VarChar(10)
+  countryId String? @map("country_id") @db.VarChar(250)
+  descriptions String? @db.VarChar(250)
+  achievements String? @db.VarChar(250)
+  certificateIssueDate DateTime? @map("certificate_issue_date") @db.Date
+  certificateExpireDate DateTime? @map("certificate_expire_date") @db.Date
+  certificateFilePath String? @map("certificate_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  @@index([userId])
+  @@index([countryId])
+  @@map("professional_certificates")
+}
+
+model Report {
+  id Int @id @default(autoincrement())
+  name String? @db.VarChar(255)
+  description String? @db.VarChar(255)
+  params String? @db.Text
+  status String? @db.Char(1)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  reportUri String? @map("report_uri") @db.VarChar(255)
+  @@map("reports")
+}
+
+model Role {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  displayName String @map("display_name") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@unique([name])
+  permissionRoleLinks0 PermissionRole[] @relation("PermissionRole_roleId")
+  userLinks1 User[] @relation("User_roleId")
+  userRoleLinks2 UserRole[] @relation("UserRole_roleId")
+  @@map("roles")
+}
+
+model SelectedCandidate {
+  id Int @id @default(autoincrement())
+  candidateId Int? @map("candidate_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  position String? @db.VarChar(255)
+  @@index([candidateId])
+  @@map("selected_candidates")
+}
+
+model Setting {
+  id Int @id @default(autoincrement())
+  key String @db.VarChar(255)
+  displayName String @map("display_name") @db.VarChar(255)
+  value String? @db.Text
+  details String? @db.Text
+  type String @db.VarChar(255)
+  sortOrder Int @map("order")
+  group String? @db.VarChar(255)
+  @@unique([key])
+  @@map("settings")
+}
+
+model Skill {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  title String? @db.VarChar(250)
+  instituteName String? @map("institute_name") @db.VarChar(250)
+  details String? @db.VarChar(250)
+  resultScore Decimal? @map("result_score") @db.Decimal(16, 6)
+  certificateFilePath String? @map("certificate_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  examScore Decimal? @map("exam_score") @db.Decimal(16, 6)
+  @@index([userId])
+  @@map("skills")
+}
+
+model SkillList {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+  skillName String? @map("skill_name") @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([userId])
+  @@map("skill_list")
+}
+
+model SubAgent {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  agentId Int @map("agent_id")
+  name String? @db.VarChar(100)
+  email String? @db.VarChar(250)
+  secondaryEmail String? @map("secondary_email") @db.VarChar(250)
+  mobile String? @db.VarChar(250)
+  secondaryMobile String? @map("secondary_mobile") @db.VarChar(250)
+  emergencyMobile String? @map("emergency_mobile") @db.VarChar(250)
+  bid String? @db.VarChar(250)
+  bidFilePath String? @map("bid_file_path") @db.VarChar(255)
+  nid String? @db.VarChar(250)
+  nidFilePath String? @map("nid_file_path") @db.VarChar(255)
+  passportNo String? @map("passport_no") @db.VarChar(250)
+  passportIssueDate DateTime? @map("passport_issue_date") @db.Date
+  passportExpireDate DateTime? @map("passport_expire_date") @db.Date
+  passportFilePath String? @map("passport_file_path") @db.VarChar(250)
+  dob DateTime? @db.Date
+  fullPhotoFilePath String? @map("full_photo_file_path") @db.VarChar(255)
+  halfPhotoFilePath String? @map("half_photo_file_path") @db.VarChar(255)
+  fatherName String? @map("father_name") @db.VarChar(50)
+  motherName String? @map("mother_name") @db.VarChar(50)
+  nationality String? @db.VarChar(20)
+  gender String? @db.VarChar(20)
+  bloodGroup String? @map("blood_group") @db.VarChar(20)
+  presentAddressHouse String? @map("present_address_house") @db.VarChar(200)
+  presentAddressRoad String? @map("present_address_road") @db.VarChar(20)
+  presentAddressVillage String? @map("present_address_village") @db.VarChar(20)
+  presentAddressPost String? @map("present_address_post") @db.VarChar(20)
+  presentAddressThanaId Int? @map("present_address_thana_id")
+  presentAddressDistrictId Int? @map("present_address_district_id")
+  presentAddressDivisionId Int? @map("present_address_division_id")
+  permanentAddressHouse String? @map("permanent_address_house") @db.VarChar(200)
+  permanentAddressRoad String? @map("permanent_address_road") @db.VarChar(20)
+  permanentAddressVillage String? @map("permanent_address_village") @db.VarChar(20)
+  permanentAddressPost String? @map("permanent_address_post") @db.VarChar(20)
+  permanentAddressThanaId Int? @map("permanent_address_thana_id")
+  permanentAddressDistrictId Int? @map("permanent_address_district_id")
+  permanentAddressDivisionId Int? @map("permanent_address_division_id")
+  basicInfoCareer String? @map("basic_info_career") @db.VarChar(250)
+  basicInfoSpecial String? @map("basic_info_special") @db.VarChar(250)
+  otherSkills String? @map("other_skills") @db.VarChar(250)
+  balance Decimal? @db.Decimal(15, 4)
+  cvFilePath String? @map("cv_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([agentId])
+  @@index([presentAddressThanaId])
+  @@index([presentAddressDistrictId])
+  @@index([presentAddressDivisionId])
+  @@index([permanentAddressThanaId])
+  @@index([permanentAddressDistrictId])
+  @@index([permanentAddressDivisionId])
+  @@map("sub_agents")
+}
+
+model SubAgentPaymentRequest {
+  id Int @id @default(autoincrement())
+  billTitle String? @map("bill_title") @db.VarChar(255)
+  subAgentId Int? @map("sub_agent_id")
+  groupId Int? @map("group_id")
+  candidateId Int? @map("candidate_id")
+  amount Decimal? @db.Decimal(15, 4)
+  status String? @db.Char(5)
+  paymentId Int? @map("payment_id")
+  remarks String? @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([subAgentId])
+  @@index([groupId])
+  @@index([candidateId])
+  @@index([paymentId])
+  @@map("sub_agent_payment_requests")
+}
+
+model Teacher {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(100)
+  email String? @db.VarChar(200)
+  secondaryEmail String? @map("secondary_email") @db.VarChar(255)
+  mobile String? @db.VarChar(255)
+  secondaryMobile String? @map("secondary_mobile") @db.VarChar(255)
+  emergencyMobile String? @map("emergency_mobile") @db.VarChar(255)
+  bid String? @db.VarChar(255)
+  bidFilePath String? @map("bid_file_path") @db.VarChar(255)
+  nid String? @db.VarChar(255)
+  nidFilePath String? @map("nid_file_path") @db.VarChar(255)
+  passportNo String? @map("passport_no") @db.VarChar(255)
+  passportIssueDate DateTime? @map("passport_issue_date") @db.Date
+  passportExpireDate DateTime? @map("passport_expire_date") @db.Date
+  passportFilePath String? @map("passport_file_path") @db.VarChar(255)
+  dob DateTime? @db.Date
+  fullPhotoFilePath String? @map("full_photo_file_path") @db.VarChar(255)
+  halfPhotoFilePath String? @map("half_photo_file_path") @db.VarChar(255)
+  fatherName String? @map("father_name") @db.VarChar(50)
+  motherName String? @map("mother_name") @db.VarChar(50)
+  nationality String? @db.VarChar(20)
+  gender String? @db.VarChar(20)
+  bloodGroup String? @map("blood_group") @db.VarChar(20)
+  presentAddressHouse String? @map("present_address_house") @db.VarChar(200)
+  presentAddressRoad String? @map("present_address_road") @db.VarChar(20)
+  presentAddressVillage String? @map("present_address_village") @db.VarChar(20)
+  presentAddressPost String? @map("present_address_post") @db.VarChar(20)
+  presentAddressThanaId Int? @map("present_address_thana_id")
+  presentAddressDistrictId Int? @map("present_address_district_id")
+  presentAddressDivisionId Int? @map("present_address_division_id")
+  permanentAddressHouse String? @map("permanent_address_house") @db.VarChar(200)
+  permanentAddressRoad String? @map("permanent_address_road") @db.VarChar(20)
+  permanentAddressVillage String? @map("permanent_address_village") @db.VarChar(20)
+  permanentAddressPost String? @map("permanent_address_post") @db.VarChar(20)
+  permanentAddressThanaId Int? @map("permanent_address_thana_id")
+  permanentAddressDistrictId Int? @map("permanent_address_district_id")
+  permanentAddressDivisionId Int? @map("permanent_address_division_id")
+  basicInfoCareer String? @map("basic_info_career") @db.Text
+  basicInfoSpecial String? @map("basic_info_special") @db.Text
+  otherSkills String? @map("other_skills") @db.VarChar(250)
+  balance Decimal? @db.Decimal(15, 4)
+  cvFilePath String? @map("cv_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([presentAddressThanaId])
+  @@index([presentAddressDistrictId])
+  @@index([presentAddressDivisionId])
+  @@index([permanentAddressThanaId])
+  @@index([permanentAddressDistrictId])
+  @@index([permanentAddressDivisionId])
+  @@map("teachers")
+}
+
+model TempCandidate {
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(255)
+  email String? @db.VarChar(255)
+  mobile String? @db.VarChar(255)
+  passportNo String? @map("passport_no") @db.VarChar(255)
+  agentCode String? @map("agent_code") @db.VarChar(255)
+  agentId Int? @map("agent_id")
+  classGroupId Int? @map("class_group_id")
+  id Int @id @default(autoincrement())
+  @@index([agentId])
+  @@index([classGroupId])
+  @@map("temp_candidates")
+}
+
+model Thana {
+  id Int @id @default(autoincrement())
+  districtId Int @map("district_id")
+  name String @db.VarChar(255)
+  bnName String @map("bn_name") @db.VarChar(255)
+  url String @db.VarChar(255)
+  @@index([districtId])
+  @@map("thanas")
+}
+
+model TicketCompany {
+  id Int @id @default(autoincrement())
+  code String? @db.VarChar(100)
+  name String? @db.VarChar(255)
+  email String? @db.VarChar(255)
+  mobile String? @db.VarChar(255)
+  address String? @db.VarChar(255)
+  logo String? @db.Text
+  status String? @db.Char(5)
+  countryId Int? @map("country_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  bankAccountName1 String? @map("bank_account_name_1") @db.VarChar(255)
+  bankAccountNo1 String? @map("bank_account_no_1") @db.VarChar(255)
+  bankName1 String? @map("bank_name_1") @db.VarChar(255)
+  bankBranchName1 String? @map("bank_branch_name_1") @db.VarChar(255)
+  bankSwiftNo1 String? @map("bank_swift_no_1") @db.VarChar(255)
+  bankIbanNo1 String? @map("bank_iban_no_1") @db.VarChar(255)
+  bankAccountName2 String? @map("bank_account_name_2") @db.VarChar(255)
+  bankAccountNo2 String? @map("bank_account_no_2") @db.VarChar(255)
+  bankName2 String? @map("bank_name_2") @db.VarChar(255)
+  bankBranchName2 String? @map("bank_branch_name_2") @db.VarChar(255)
+  bankSwiftNo2 String? @map("bank_swift_no_2") @db.VarChar(255)
+  bankIbanNo2 String? @map("bank_iban_no_2") @db.VarChar(255)
+  signature String? @db.Text
+  @@index([countryId])
+  @@map("ticket_companies")
+}
+
+model TicketInvoice {
+  id Int @id @default(autoincrement())
+  invoiceNo String? @map("invoice_no") @db.VarChar(250)
+  invoiceDate DateTime? @map("invoice_date") @db.Date
+  ticketCompanyId Int? @map("ticket_company_id")
+  billTo String? @map("bill_to") @db.VarChar(100)
+  companierId Int? @map("companier_id")
+  agencierId Int? @map("agencier_id")
+  agencyId Int? @map("agency_id")
+  agentId Int? @map("agent_id")
+  candidateId Int? @map("candidate_id")
+  billToName String? @map("bill_to_name") @db.VarChar(255)
+  billToCode String? @map("bill_to_code") @db.VarChar(255)
+  billToEmail String? @map("bill_to_email") @db.VarChar(255)
+  billToMobile String? @map("bill_to_mobile") @db.VarChar(255)
+  billToAddress String? @map("bill_to_address") @db.VarChar(255)
+  billToTerms String? @map("bill_to_terms") @db.VarChar(255)
+  routeFrom String? @map("route_from") @db.VarChar(255)
+  routeTo String? @map("route_to") @db.VarChar(255)
+  airline String? @db.VarChar(255)
+  ticketNo String? @map("ticket_no") @db.VarChar(255)
+  flightDate DateTime? @map("flight_date") @db.Date
+  flightTime String? @map("flight_time") @db.VarChar(16)
+  currency String? @db.VarChar(255)
+  subtotal Decimal? @db.Decimal(16, 6)
+  taxRate Decimal? @map("tax_rate") @db.Decimal(18, 6)
+  taxAmount Decimal? @map("tax_amount") @db.Decimal(15, 4)
+  total Decimal? @db.Decimal(16, 6)
+  bankAccountName1 String? @map("bank_account_name_1") @db.VarChar(255)
+  bankAccountNo1 String? @map("bank_account_no_1") @db.VarChar(255)
+  bankName1 String? @map("bank_name_1") @db.VarChar(255)
+  bankBranchName1 String? @map("bank_branch_name_1") @db.VarChar(255)
+  bankSwiftNo1 String? @map("bank_swift_no_1") @db.VarChar(255)
+  bankIbanNo1 String? @map("bank_iban_no_1") @db.VarChar(255)
+  bankAccountName2 String? @map("bank_account_name_2") @db.VarChar(255)
+  bankAccountNo2 String? @map("bank_account_no_2") @db.VarChar(255)
+  bankName2 String? @map("bank_name_2") @db.VarChar(255)
+  bankBranchName2 String? @map("bank_branch_name_2") @db.VarChar(255)
+  bankSwiftNo2 String? @map("bank_swift_no_2") @db.VarChar(255)
+  bankIbanNo2 String? @map("bank_iban_no_2") @db.VarChar(255)
+  status String? @db.Char(5)
+  remarks String? @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  approvedAt DateTime? @map("approved_at") @db.Timestamptz(6)
+  approvedBy Int? @map("approved_by")
+  canceledAt DateTime? @map("canceled_at") @db.Timestamptz(6)
+  canceledBy Int? @map("canceled_by")
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@index([ticketCompanyId])
+  @@index([companierId])
+  @@index([agencierId])
+  @@index([agencyId])
+  @@index([agentId])
+  @@index([candidateId])
+  @@map("ticket_invoices")
+}
+
+model TicketInvoiceLine {
+  id Int @id @default(autoincrement())
+  ticketInvoiceId Int? @map("ticket_invoice_id")
+  candidateId Int? @map("candidate_id")
+  name String? @db.VarChar(255)
+  passportNo String? @map("passport_no") @db.VarChar(100)
+  remarks String? @db.VarChar(255)
+  quantity Int?
+  unitPrice Decimal? @map("unit_price") @db.Decimal(15, 4)
+  totalAmount Decimal? @map("total_amount") @db.Decimal(15, 4)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  isCandidate String? @map("is_candidate") @db.VarChar(100)
+  @@index([ticketInvoiceId])
+  @@index([candidateId])
+  @@map("ticket_invoice_lines")
+}
+
+model TicketInvoiceMoneyReceipt {
+  id Int @id @default(autoincrement())
+  ticketInvoiceId Int? @map("ticket_invoice_id")
+  receiptNo String? @map("receipt_no") @db.VarChar(100)
+  receivedFrom String? @map("received_from") @db.VarChar(255)
+  hotel String? @db.VarChar(255)
+  amount Decimal? @db.Decimal(15, 4)
+  receivedFor String? @map("received_for") @db.VarChar(255)
+  receiptDate DateTime? @map("receipt_date") @db.Date
+  recipient String? @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  paymentMethod String? @map("payment_method") @db.VarChar(255)
+  transactionNo String? @map("transaction_no") @db.VarChar(255)
+  remarks String? @db.VarChar(255)
+  @@index([ticketInvoiceId])
+  @@map("ticket_invoice_money_receipts")
+}
+
+model Training {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  title String? @db.VarChar(250)
+  instituteName String? @map("institute_name") @db.VarChar(250)
+  topics String? @db.VarChar(250)
+  startDate DateTime? @map("start_date") @db.Date
+  endDate DateTime? @map("end_date") @db.Date
+  duration Int?
+  durationType String? @map("duration_type") @db.VarChar(10)
+  countryId String? @map("country_id") @db.VarChar(250)
+  descriptions String? @db.VarChar(250)
+  achievements String? @db.VarChar(250)
+  certificateFilePath String? @map("certificate_file_path") @db.VarChar(250)
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  address String? @db.VarChar(200)
+  @@index([userId])
+  @@index([countryId])
+  @@map("trainings")
+}
+
+model Translation {
+  id Int @id @default(autoincrement())
+  tableName String @map("table_name") @db.VarChar(255)
+  columnName String @map("column_name") @db.VarChar(255)
+  foreignKey Int @map("foreign_key")
+  locale String @db.VarChar(255)
+  value String @db.Text
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@unique([tableName, columnName, foreignKey, locale])
+  @@map("translations")
+}
+
+model Union {
+  id Int @id @default(autoincrement())
+  upazillaId Int @map("upazilla_id")
+  name String @db.VarChar(25)
+  bnName String @map("bn_name") @db.VarChar(25)
+  url String @db.VarChar(50)
+  @@index([upazillaId])
+  @@map("unions")
+}
+
+model Upazila {
+  id Int @id @default(autoincrement())
+  districtId Int @map("district_id")
+  name String @db.VarChar(25)
+  bnName String @map("bn_name") @db.VarChar(25)
+  url String @db.VarChar(50)
+  @@index([districtId])
+  @@map("upazilas")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  roleId Int? @map("role_id")
+  name String @db.VarChar(255)
+  email String @db.VarChar(255)
+  avatar String? @db.VarChar(255)
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  password String @db.VarChar(255)
+  rememberToken String? @map("remember_token") @db.VarChar(100)
+  settings String? @db.Text
+  userTypeId Int? @map("user_type_id")
+  agentId Int? @map("agent_id")
+  subAgentId Int? @map("sub_agent_id")
+  teacherId Int? @map("teacher_id")
+  employeeId Int? @map("employee_id")
+  candidateId Int? @map("candidate_id")
+  employerId Int? @map("employer_id")
+  agencierId Int? @map("agencier_id")
+  companierId Int? @map("companier_id")
+  status String? @db.Char(5)
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  roleIdRef Role? @relation("User_roleId", fields: [roleId], references: [id])
+  @@unique([email])
+  @@index([roleId])
+  @@index([userTypeId])
+  @@index([agentId])
+  @@index([subAgentId])
+  @@index([teacherId])
+  @@index([employeeId])
+  @@index([candidateId])
+  @@index([employerId])
+  @@index([agencierId])
+  @@index([companierId])
+  sessions Session[]
+  passwordResetTokens PasswordResetToken[]
+  userRoleLinks0 UserRole[] @relation("UserRole_userId")
+  @@map("users")
+}
+
+model UserRole {
+  userId Int @map("user_id")
+  roleId Int @map("role_id")
+  roleIdRef Role @relation("UserRole_roleId", fields: [roleId], references: [id], onDelete: Cascade)
+  userIdRef User @relation("UserRole_userId", fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model UserType {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  status String @db.Char(1)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  @@map("user_types")
+}
+
+model VisaImmigration {
+  id Int @id @default(autoincrement())
+  issueDate DateTime? @map("issue_date") @db.Date
+  expireDate DateTime? @map("expire_date") @db.Date
+  visaMpNo String? @map("visa_mp_no") @db.VarChar(255)
+  status String? @db.Char(5)
+  candidateId Int? @map("candidate_id")
+  createdAt DateTime? @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  documentFilePath String? @map("document_file_path") @db.VarChar(255)
+  @@index([candidateId])
+  @@map("visa_immigrations")
+}
+
+
+model Session {
+  id               String    @id @db.VarChar(64)
+  userId           Int       @map("user_id")
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  absoluteExpiresAt DateTime @map("absolute_expires_at") @db.Timestamptz(6)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  ip               String?   @db.VarChar(64)
+  userAgent        String?   @map("user_agent") @db.VarChar(400)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model LoginAttempt {
+  id        BigInt   @id @default(autoincrement())
+  email     String   @db.VarChar(255)
+  ip        String?  @db.VarChar(64)
+  success   Boolean
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([email, createdAt])
+  @@map("login_attempts")
+}
+
+model PasswordResetToken {
+  id        BigInt    @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  tokenHash String    @map("token_hash") @db.VarChar(128)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  action     String   @db.VarChar(80)
+  entityType String   @map("entity_type") @db.VarChar(80)
+  entityId   String?  @map("entity_id") @db.VarChar(64)
+  metadata   Json?
+  ip         String?  @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+model Job {
+  id          BigInt    @id @default(autoincrement())
+  type        String    @db.VarChar(80)
+  payload     Json
+  status      String    @default("queued") @db.VarChar(20)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  runAfter    DateTime  @default(now()) @map("run_after") @db.Timestamptz(6)
+  lockedAt    DateTime? @map("locked_at") @db.Timestamptz(6)
+  lastError   String?   @map("last_error") @db.Text
+  result      Json?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, runAfter])
+  @@map("jobs")
+}
+
+model MigrationRun {
+  id          String    @id @db.VarChar(64)
+  sourceFile  String    @map("source_file") @db.VarChar(400)
+  sourceSha256 String   @map("source_sha256") @db.VarChar(64)
+  status      String    @db.VarChar(32)
+  startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  finishedAt  DateTime? @map("finished_at") @db.Timestamptz(6)
+  report      Json?
+
+  @@map("migration_runs")
+}
+
+model MigrationTableResult {
+  id            BigInt   @id @default(autoincrement())
+  runId         String   @map("run_id") @db.VarChar(64)
+  sourceTable   String   @map("source_table") @db.VarChar(120)
+  targetTable   String   @map("target_table") @db.VarChar(120)
+  sourceRows    Int      @map("source_rows")
+  insertedRows  Int      @map("inserted_rows")
+  skippedRows   Int      @map("skipped_rows")
+  quarantinedRows Int    @map("quarantined_rows")
+  transformedRows Int    @map("transformed_rows")
+  status        String   @db.VarChar(32)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([runId, sourceTable])
+  @@map("migration_table_results")
+}
+
+model MigrationQuarantine {
+  id          BigInt   @id @default(autoincrement())
+  runId       String   @map("run_id") @db.VarChar(64)
+  sourceTable String   @map("source_table") @db.VarChar(120)
+  sourcePk    String?  @map("source_pk") @db.VarChar(120)
+  reason      String   @db.VarChar(200)
+  rowData     Json     @map("row_data")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([runId, sourceTable])
+  @@map("migration_quarantine")
+}
+
+model IdMap {
+  id          BigInt @id @default(autoincrement())
+  sourceTable String @map("source_table") @db.VarChar(120)
+  sourceId    String @map("source_id") @db.VarChar(64)
+  targetTable String @map("target_table") @db.VarChar(120)
+  targetId    String @map("target_id") @db.VarChar(64)
+  strategy    String @db.VarChar(40)
+
+  @@unique([sourceTable, sourceId, targetTable])
+  @@map("id_maps")
+}
+
+model BankAccount {
+  id            BigInt   @id @default(autoincrement())
+  ownerTable    String   @map("owner_table") @db.VarChar(80)
+  ownerId       Int      @map("owner_id")
+  accountName   String?  @map("account_name") @db.VarChar(250)
+  accountNo     String?  @map("account_no") @db.VarChar(250)
+  bankName      String?  @map("bank_name") @db.VarChar(250)
+  branchName    String?  @map("branch_name") @db.VarChar(250)
+  iban          String?  @db.VarChar(250)
+  swift         String?  @db.VarChar(250)
+  slot          String   @default("primary") @db.VarChar(20)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([ownerTable, ownerId, slot])
+  @@map("bank_accounts")
+}
+
+model PaymentSnapshot {
+  id           BigInt   @id @default(autoincrement())
+  snapshotName String   @map("snapshot_name") @db.VarChar(120)
+  sourceId     Int?     @map("source_id")
+  payload      Json
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([snapshotName, sourceId])
+  @@map("payment_snapshots")
+}
+
+model StoredFile {
+  id           String   @id @db.VarChar(64)
+  ownerTable   String?  @map("owner_table") @db.VarChar(80)
+  ownerId      String?  @map("owner_id") @db.VarChar(64)
+  originalName String   @map("original_name") @db.VarChar(255)
+  storagePath  String   @map("storage_path") @db.VarChar(500)
+  mimeType     String   @map("mime_type") @db.VarChar(120)
+  sizeBytes    Int      @map("size_bytes")
+  createdBy    Int?     @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([ownerTable, ownerId])
+  @@map("stored_files")
+}
