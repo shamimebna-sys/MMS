@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import { getCurrentUser } from "@/server/current-user";
+import { canReadStoredFile } from "@/server/media-access";
 import { resolveStoredFile } from "@/server/uploads";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   if (!user) return new Response("Unauthorized", { status: 401 });
   const { id } = await context.params;
   const file = await resolveStoredFile(id);
-  if (!file) return new Response("Not found", { status: 404 });
+  if (!file || !(await canReadStoredFile(user, { id, createdBy: file.createdBy }))) return new Response("Not found", { status: 404 });
   const bytes = await fs.readFile(file.absolute);
   return new Response(bytes, {
     headers: {

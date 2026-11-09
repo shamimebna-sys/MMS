@@ -14,9 +14,8 @@ export async function CandidateInside({ id, stamp, error }: { id: number; stamp:
   const fields = presentCandidateFields(form?.fields ?? [], stamp);
   const canEdit = canMutateTable(user, "candidates", "edit");
   return (
-    <div className="space-y-5">
+    <div className="record-canvas">
       <CandidateFile file={file} step={stamp ? 2 : 1} />
-      {error ? <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
       {canEdit && fields.length > 0 ? (
         <BreadForm
           slug="candidates"
@@ -24,22 +23,30 @@ export async function CandidateInside({ id, stamp, error }: { id: number; stamp:
           title="Candidate"
           fields={fields}
           backHref="/records/candidates"
-          heading="Basic information"
+          heading={stamp ? "Passport With Stamp" : "Basic information"}
           stamp={stamp}
+          embedded
+          error={error}
         />
       ) : (
-        <section className="surface grid gap-px overflow-hidden md:grid-cols-2">
-          {fields.filter((field) => field.input !== "hidden" && field.input !== "password").map((field) => (
-            <div key={field.name} className={`bg-card px-5 py-4 ${field.input === "textarea" ? "md:col-span-2" : ""}`}>
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">{field.label}</p>
-              <div className="mt-1.5 text-sm">
-                <FileValue
-                  value={field.input === "select" ? field.options.find((option) => option.value === field.value)?.label || field.value : field.value}
-                  className="h-28 w-24 rounded-xl object-cover"
-                />
-              </div>
-            </div>
-          ))}
+        <section className="record-card">
+          <div className="record-card-body">
+            <h2 className="record-section-title">{stamp ? "Passport With Stamp" : "Basic information"}</h2>
+            <p className="record-section-copy">Values currently stored on this candidate.</p>
+            <dl className="record-grid record-facts">
+              {fields.filter((field) => field.input !== "hidden" && field.input !== "password").map((field) => (
+                <div key={field.name} className={`record-fact ${field.input === "textarea" ? "record-span" : ""}`}>
+                  <dt>{field.label}</dt>
+                  <dd>
+                    <FileValue
+                      value={field.input === "select" ? field.options.find((option) => option.value === field.value)?.label || field.value : field.value}
+                      className="h-28 w-24 rounded-lg object-cover"
+                    />
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </section>
       )}
     </div>

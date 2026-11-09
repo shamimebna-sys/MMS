@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { formatFixed } from "@/lib/money";
 
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
@@ -13,9 +14,14 @@ export function statusLabel(value: unknown): string {
 }
 
 export function formatMoney(value: unknown): string {
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return "0.00";
-  return amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const raw = typeof value === "string" || typeof value === "number" || typeof value === "bigint" ? String(value).trim() : "";
+  if (!/^-?\d+(\.\d+)?$/.test(raw)) return "0.00";
+  const fixed = formatFixed(raw, 2);
+  const negative = fixed.startsWith("-");
+  const unsigned = negative ? fixed.slice(1) : fixed;
+  const [whole, fraction = "00"] = unsigned.split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${negative ? "-" : ""}${grouped}.${fraction}`;
 }
 
 export function displayValue(value: unknown): string {

@@ -1,23 +1,11 @@
-import { canBrowseTable, recordScope, type AccessUser, type RecordScope } from "@/lib/auth/permissions";
+import { canBrowseTable, type AccessUser } from "@/lib/auth/permissions";
+import { candidateFilterSql, quoteIdent, visibilitySql, type ScopeMode } from "@/lib/auth/row-scope";
 import { pool } from "@/lib/db";
 
-const IDENT = /^[a-z_][a-z0-9_]*$/;
-export const PAGE_SIZE = 25;
+export { candidateFilterSql, quoteIdent, visibilitySql };
+export type { ScopeMode };
 
-export type ScopeMode =
-  | { mode: "reference" }
-  | { mode: "own-user"; column: string }
-  | {
-      mode: "column";
-      candidate?: string;
-      agent?: string;
-      subAgent?: string;
-      agencier?: string;
-      companier?: string;
-    }
-  | { mode: "payment" }
-  | { mode: "invoice" }
-  | { mode: "candidate-child"; column: string };
+export const PAGE_SIZE = 25;
 
 export type ResourceDef = {
   slug: string;
@@ -46,14 +34,19 @@ export const RESOURCES: ResourceDef[] = [
   { slug: "document_types", table: "document_types", title: "Document Types", group: "Management", columns: ["id", "name", "serial_no", "status"], search: ["name"], softDelete: false, scope: { mode: "reference" } },
   { slug: "candidates", table: "candidates", title: "Candidates", group: "Management", columns: ["id", "code", "name", "mobile", "passport_no", "gender", "status", "agent_id", "position"], search: ["name", "code", "mobile", "passport_no", "email"], softDelete: true, scope: { mode: "column", candidate: "id", agent: "agent_id", subAgent: "sub_agent_id", agencier: "agencier_id", companier: "companier_id" }, create: "candidate" },
   { slug: "class_groups", table: "class_groups", title: "Class Groups", group: "Management", columns: ["id", "code", "name", "fee_amount", "status"], search: ["name", "code"], softDelete: false, scope: { mode: "reference" } },
+  { slug: "class-schedules", table: "class_schedules", title: "Class Schedules", group: "Management", columns: ["id", "subject", "start_time", "end_time", "week_day", "status"], search: ["subject", "week_day", "status"], softDelete: false, scope: { mode: "reference" } },
+  { slug: "euro-to-bdt-rates", table: "euro_to_bdt_rates", title: "Euro To BDT Rates", group: "Administration", columns: ["id", "conversion_date", "euro_rate", "created_at"], search: [], softDelete: false, scope: { mode: "reference" } },
+  { slug: "currencies", table: "currencies", title: "Currencies", group: "Administration", columns: ["id", "full_name", "short_name", "symbol", "position", "status"], search: ["full_name", "short_name", "symbol"], softDelete: false, scope: { mode: "reference" } },
   { slug: "announcements", table: "announcements", title: "Announcements", group: "Management", columns: ["id", "topic", "status", "anounce_date", "created_at"], search: ["topic", "message"], softDelete: false, scope: { mode: "reference" } },
   { slug: "exams", table: "exams", title: "Exams", group: "Management", columns: ["id", "name", "exam_date", "exam_time", "status"], search: ["name"], softDelete: false, scope: { mode: "reference" } },
   { slug: "payment_requests", table: "payment_requests", title: "Payment Requests", group: "Management", columns: ["id", "bill_title", "amount", "agent_id", "candidate_id", "status"], search: ["bill_title"], softDelete: false, scope: { mode: "column", agent: "agent_id", candidate: "candidate_id" } },
+  { slug: "sub-agent-payment-requests", table: "sub_agent_payment_requests", title: "Sub Agent Payment Requests", group: "Management", columns: ["id", "bill_title", "sub_agent_id", "candidate_id", "amount", "status"], search: ["bill_title", "remarks"], softDelete: false, scope: { mode: "column", candidate: "candidate_id", subAgent: "sub_agent_id" } },
   { slug: "selected_candidates", table: "selected_candidates", title: "Banner Candidates", group: "Management", columns: ["id", "candidate_id", "position", "created_at"], search: ["position"], softDelete: false, scope: { mode: "candidate-child", column: "candidate_id" } },
   { slug: "positions", table: "positions", title: "Positions", group: "Management", columns: ["id", "title", "status"], search: ["title"], softDelete: false, scope: { mode: "reference" } },
   { slug: "licenses", table: "licenses", title: "Licenses", group: "Management", columns: ["id", "license_no", "companier_id", "license_expire_date", "status"], search: ["license_no"], softDelete: false, scope: { mode: "reference" } },
   { slug: "ticket_companies", table: "ticket_companies", title: "Ticket Companies", group: "Management", columns: ["id", "code", "name", "mobile", "email", "status"], search: ["name", "code", "email"], softDelete: false, scope: { mode: "reference" } },
   { slug: "ticket_invoices", table: "ticket_invoices", title: "Ticket Invoices", group: "Management", columns: ["id", "invoice_no", "invoice_date", "ticket_no", "airline", "candidate_id", "total", "status"], search: ["invoice_no", "ticket_no", "bill_to_name"], softDelete: false, scope: { mode: "candidate-child", column: "candidate_id" } },
+  { slug: "ticket-invoice-money-receipts", table: "ticket_invoice_money_receipts", title: "Ticket Invoice Money Receipts", group: "Management", columns: ["id", "ticket_invoice_id", "receipt_no", "received_from", "amount", "received_for", "receipt_date", "recipient", "created_at", "payment_method", "transaction_no"], search: ["receipt_no", "received_from", "received_for", "recipient", "transaction_no"], softDelete: false, scope: { mode: "reference" } },
   { slug: "sub_agents", table: "sub_agents", title: "Sub Agents", group: "Management", columns: ["id", "code", "name", "mobile", "email", "agent_id", "status"], search: ["name", "code", "mobile", "email"], softDelete: true, scope: { mode: "column", agent: "agent_id", subAgent: "id" }, create: "party" },
   { slug: "notifications", table: "notifications", title: "Notifications", group: "Notifications", columns: ["id", "user_id", "title", "is_seen", "created_at"], search: ["title"], softDelete: false, scope: { mode: "own-user", column: "user_id" } },
   { slug: "reports", table: "reports", title: "Reports", group: "Reports", columns: ["id", "name", "status", "report_uri"], search: ["name"], softDelete: false, scope: { mode: "reference" } },
@@ -63,9 +56,11 @@ export const RESOURCES: ResourceDef[] = [
   { slug: "visa_immigrations", table: "visa_immigrations", title: "Visas", group: "Candidate file", columns: ["id", "candidate_id", "visa_mp_no", "issue_date", "expire_date", "status"], search: ["visa_mp_no"], softDelete: false, scope: { mode: "candidate-child", column: "candidate_id" } },
   { slug: "labour_contracts", table: "labour_contracts", title: "Labour contracts", group: "Candidate file", columns: ["id", "candidate_id", "issue_date", "expire_date", "status"], search: [], softDelete: false, scope: { mode: "candidate-child", column: "candidate_id" } },
   { slug: "flight_schedules", table: "flight_schedules", title: "Flights", group: "Candidate file", columns: ["id", "candidate_id", "airlinece_name", "flight_date", "flight_time"], search: ["airlinece_name"], softDelete: false, scope: { mode: "candidate-child", column: "candidate_id" } },
+  { slug: "arcs", table: "arcs", title: "Arcs", group: "Candidate file", columns: ["id", "candidate_id", "arc_number", "issue_date", "expire_date", "is_lifetime", "status", "acr_file_path"], search: ["arc_number", "is_lifetime", "status"], softDelete: false, scope: { mode: "candidate-child", column: "candidate_id" } },
   { slug: "manpower_trainings", table: "manpower_trainings", title: "Manpower training", group: "Candidate file", columns: ["id", "candidate_id", "training_start_date", "training_end_date", "status"], search: [], softDelete: false, scope: { mode: "candidate-child", column: "candidate_id" } },
   { slug: "exam_results", table: "exam_results", title: "Exam results", group: "Candidate file", columns: ["id", "candidate_id", "exam_id", "result", "status"], search: ["remarks"], softDelete: false, scope: { mode: "candidate-child", column: "candidate_id" } },
   { slug: "invoices", table: "invoices", title: "Invoices", group: "Administration", columns: ["id", "invoice_no", "issue_date", "agenciers_id", "companier_id", "service", "status"], search: ["invoice_no", "owner_name", "service"], softDelete: false, scope: { mode: "invoice" } },
+  { slug: "invoice-money-receipts", table: "invoice_money_receipts", title: "Money Receipts", group: "Administration", columns: ["id", "invoice_id", "receipt_no", "received_from", "hotel", "amount", "received_for", "receipt_date", "payment_method", "transaction_no"], search: ["receipt_no", "received_from", "hotel", "received_for", "recipient", "transaction_no"], softDelete: false, scope: { mode: "reference" } },
   { slug: "roles", table: "roles", title: "Roles", group: "Administration", columns: ["id", "name", "display_name"], search: ["name", "display_name"], softDelete: false, scope: { mode: "reference" } },
   { slug: "live_status", table: "live_status", title: "Pipeline steps", group: "Administration", columns: ["id", "name", "status"], search: ["name"], softDelete: false, scope: { mode: "reference" } },
   { slug: "districts", table: "districts", title: "Districts", group: "Administration", columns: ["id", "name", "bn_name", "division_id", "verification_status"], search: ["name", "bn_name"], softDelete: false, scope: { mode: "reference" } },
@@ -84,20 +79,6 @@ export function resolveResource(slug: string): ResourceDef | undefined {
   return RESOURCES.find((resource) => resource.table === table || resource.slug === table);
 }
 
-export function quoteIdent(identifier: string): string {
-  if (!IDENT.test(identifier)) throw new Error("Unsafe identifier.");
-  return `"${identifier}"`;
-}
-
-function scopeValue(scope: RecordScope): number | null {
-  if (scope.kind === "candidate") return scope.candidateId;
-  if (scope.kind === "agent") return scope.agentId;
-  if (scope.kind === "subAgent") return scope.subAgentId;
-  if (scope.kind === "agencier") return scope.agencierId;
-  if (scope.kind === "companier") return scope.companierId;
-  return null;
-}
-
 const PANEL_TABLES: Record<string, string[]> = {
   Agent: ["candidates", "payment_requests", "sub_agents", "payments", "sub_agent_payment_requests"],
   "Sub Agent": ["candidates", "payment_requests"],
@@ -110,93 +91,6 @@ export function assertCanRead(user: AccessUser, resource: ResourceDef): void {
   if (!canBrowseTable(user, resource.table) && !panel?.includes(resource.table)) {
     throw new Error("You do not have access to this module.");
   }
-}
-
-export function visibilitySql(resource: ResourceDef, user: AccessUser, params: unknown[]): string {
-  const scope = recordScope(user);
-  if (scope.kind === "none") return "FALSE";
-  if (resource.scope.mode === "reference" || scope.kind === "all") return "TRUE";
-  if (resource.table === "payment_requests" && scope.kind === "agent") {
-    params.push(scope.agentId);
-    return `(agent_id = $${params.length} OR candidate_id IN (SELECT id FROM candidates WHERE agent_id = $${params.length} AND deleted_at IS NULL))`;
-  }
-  if (resource.table === "sub_agent_payment_requests" && scope.kind === "agent") {
-    params.push(scope.agentId);
-    return `(sub_agent_id IN (SELECT id FROM sub_agents WHERE agent_id = $${params.length} AND deleted_at IS NULL) OR candidate_id IN (SELECT id FROM candidates WHERE agent_id = $${params.length} AND deleted_at IS NULL))`;
-  }
-  if (resource.scope.mode === "own-user") {
-    params.push(user.id);
-    return `${quoteIdent(resource.scope.column)} = $${params.length}`;
-  }
-  if (resource.scope.mode === "column") {
-    const column =
-      scope.kind === "candidate"
-        ? resource.scope.candidate
-        : scope.kind === "agent"
-          ? resource.scope.agent
-          : scope.kind === "subAgent"
-            ? resource.scope.subAgent
-            : scope.kind === "agencier"
-              ? resource.scope.agencier
-              : scope.kind === "companier"
-                ? resource.scope.companier
-                : undefined;
-    const value = scopeValue(scope);
-    if (!column || value == null) return "FALSE";
-    params.push(value);
-    return `${quoteIdent(column)} = $${params.length}`;
-  }
-  if (resource.scope.mode === "candidate-child") {
-    const column = resource.scope.column;
-    if (scope.kind === "candidate") {
-      params.push(scope.candidateId);
-      return `${quoteIdent(column)} = $${params.length}`;
-    }
-    const owner =
-      scope.kind === "agent"
-        ? "agent_id"
-        : scope.kind === "subAgent"
-          ? "sub_agent_id"
-          : scope.kind === "agencier"
-            ? "agencier_id"
-            : scope.kind === "companier"
-              ? "companier_id"
-              : null;
-    const value = scopeValue(scope);
-    if (!owner || value == null) return "FALSE";
-    params.push(value);
-    return `${quoteIdent(column)} IN (SELECT id FROM candidates WHERE deleted_at IS NULL AND ${quoteIdent(owner)} = $${params.length})`;
-  }
-  if (resource.scope.mode === "payment") {
-    if (scope.kind === "candidate") {
-      params.push(scope.candidateId);
-      return `${quoteIdent("candidate_id")} = $${params.length}`;
-    }
-    if (scope.kind === "agent") {
-      params.push(scope.agentId);
-      return `${quoteIdent("sub_agent_id")} IN (SELECT id FROM sub_agents WHERE agent_id = $${params.length} AND deleted_at IS NULL)`;
-    }
-    if (scope.kind === "subAgent") {
-      params.push(scope.subAgentId);
-      return `${quoteIdent("sub_agent_id")} = $${params.length}`;
-    }
-    return "FALSE";
-  }
-  if (scope.kind === "agencier") {
-    params.push(scope.agencierId);
-    return `${quoteIdent("agenciers_id")} = $${params.length}`;
-  }
-  if (scope.kind === "companier") {
-    params.push(scope.companierId);
-    return `${quoteIdent("companier_id")} = $${params.length}`;
-  }
-  if (scope.kind === "candidate" || scope.kind === "agent" || scope.kind === "subAgent") {
-    const column = scope.kind === "candidate" ? "id" : scope.kind === "agent" ? "agent_id" : "sub_agent_id";
-    params.push(scopeValue(scope));
-    const marker = `$${params.length}`;
-    return `${quoteIdent("id")} IN (SELECT invoice_id FROM invoice_candidates ic JOIN candidates c ON c.id = ic.candidate_id WHERE c.${quoteIdent(column)} = ${marker} AND c.deleted_at IS NULL)`;
-  }
-  return "FALSE";
 }
 
 function whereSql(resource: ResourceDef, user: AccessUser, query: string): { sql: string; params: unknown[] } {
@@ -268,17 +162,4 @@ export async function readRecord(resource: ResourceDef, user: AccessUser, id: nu
     params,
   );
   return (result.rows[0] as Record<string, unknown> | undefined) ?? null;
-}
-
-export function candidateFilterSql(user: AccessUser, params: unknown[]): string {
-  const scope = recordScope(user);
-  if (scope.kind === "none") return "FALSE";
-  if (scope.kind === "all") return `"deleted_at" IS NULL`;
-  if (scope.kind === "candidate") {
-    params.push(scope.candidateId);
-    return `"deleted_at" IS NULL AND "id" = $${params.length}`;
-  }
-  const column = scope.kind === "agent" ? "agent_id" : scope.kind === "subAgent" ? "sub_agent_id" : scope.kind === "agencier" ? "agencier_id" : "companier_id";
-  params.push(scopeValue(scope));
-  return `"deleted_at" IS NULL AND ${quoteIdent(column)} = $${params.length}`;
 }

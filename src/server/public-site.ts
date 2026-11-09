@@ -1,3 +1,4 @@
+import { publicCandidateFilter } from "@/lib/auth/public-candidate";
 import { pool } from "@/lib/db";
 
 export type PublicJob = { id: number; code: string; name: string; description: string };
@@ -94,9 +95,10 @@ export async function listPublicCandidates(q: string, page: number): Promise<{ r
   const size = 12;
   const offset = Math.max(page - 1, 0) * size;
   const filter = q ? `%${q}%` : "";
+  const published = publicCandidateFilter("c");
   const total = await pool.query(
     `SELECT count(*)::int AS total FROM candidates c
-     WHERE c.deleted_at IS NULL AND btrim(coalesce(c.name, '')) <> ''
+     WHERE ${published}
        AND ($1 = '' OR c.name ILIKE $2)`,
     [q, filter],
   );
@@ -109,7 +111,7 @@ export async function listPublicCandidates(q: string, page: number): Promise<{ r
             coalesce(nullif(btrim(c.half_photo_file_path), ''), nullif(btrim(c.full_photo_file_path), ''), '') AS photo
      FROM candidates c
      LEFT JOIN class_groups g ON g.id = c.class_group_id
-     WHERE c.deleted_at IS NULL AND btrim(coalesce(c.name, '')) <> ''
+     WHERE ${published}
        AND ($1 = '' OR c.name ILIKE $2)
      ORDER BY c.id DESC
      LIMIT $3 OFFSET $4`,

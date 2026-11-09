@@ -1,4 +1,7 @@
 import type { AccessUser } from "@/lib/auth/permissions";
+import { walletBalanceSql, walletLedgerScope, walletPaymentWhere } from "@/lib/auth/wallet-scope";
+import { addDecimal } from "@/lib/money";
+import { formatLedgerMoney, runningLedgerBalances } from "@/lib/payment-ledger";
 import { mediaUrl } from "@/lib/media";
 import { pool } from "@/lib/db";
 
@@ -36,7 +39,7 @@ type RawPayment = {
   id: number;
   title: string;
   type: string;
-  amount: number;
+  amount: string;
   status: string;
   invoice_no: string;
   trx_no: string;
@@ -48,20 +51,9 @@ type RawPayment = {
   cheque_file_path: string;
   payment_method: string;
   currency_id: number | null;
-  rate: number;
+  rate: string;
   symbol: string;
 };
-
-function money(symbol: string, value: number): string {
-  const mark = symbol.trim() || "€";
-  const text = Number.isInteger(value) ? String(value) : value.toFixed(2);
-  return `${mark} ${text}`;
-}
-
-function euroAmount(row: RawPayment): number {
-  if (row.currency_id === 1 && row.rate > 1) return row.amount / row.rate;
-  return row.amount;
-}
 
 export function newInvoiceNo(now = new Date()): string {
   const part = (value: number) => String(value).padStart(2, "0");
@@ -70,26 +62,19 @@ export function newInvoiceNo(now = new Date()): string {
 }
 
 export async function loadWallet(user: AccessUser, query: string, page: number, pageSize: number): Promise<WalletView> {
-  const personal = user.agentId != null || user.subAgentId != null;
-  const balance = user.agentId
-    ? await pool.query(`SELECT COALESCE(balance, 0)::float AS balance FROM agents WHERE id = $1`, [user.agentId])
-    : user.subAgentId
-      ? await pool.query(`SELECT COALESCE(balance, 0)::float AS balance FROM sub_agents WHERE id = $1`, [user.subAgentId])
-      : await pool.query(`SELECT COALESCE(SUM(balance), 0)::float AS balance FROM agents WHERE deleted_at IS NULL`);
+  const ledger = walletLedgerScope(user);
+  const balanceQuery = walletBalanceSql(ledger);
+  const balance = await pool.query(balanceQuery.sql, balanceQuery.params);
   const currencies = await pool.query(`SELECT id, short_name, symbol FROM currencies ORDER BY id`);
-  const where = personal
-    ? user.agentId
-      ? `WHERE p.agent_id = $1`
-      : `WHERE p.sub_agent_id = $1`
-    : `WHERE TRUE`;
-  const params: unknown[] = personal ? [user.agentId ?? user.subAgentId] : [];
+  const params: unknown[] = [];
+  const where = `WHERE ${walletPaymentWhere(ledger, params)}`;
   const listed = await pool.query(
-    `SELECT p.id, COALESCE(p.title, '') AS title, trim(COALESCE(p.type, '')) AS type, COALESCE(p.amount, 0)::float AS amount,
+    `SELECT p.id, COALESCE(p.title, '') AS title, trim(COALESCE(p.type, '')) AS type, COALESCE(p.amount, 0)::text AS amount,
             trim(COALESCE(p.status, '')) AS status, COALESCE(p.invoice_no, '') AS invoice_no, COALESCE(p.trx_no, '') AS trx_no,
             COALESCE(to_char(p.payment_date, 'YYYY-MM-DD'), '') AS payment_date, COALESCE(p.payment_time, '') AS payment_time,
             COALESCE(p.payment_receiver, '') AS payment_receiver, COALESCE(p.payment_received_location, '') AS payment_received_location,
             COALESCE(p.description, '') AS description, COALESCE(p.cheque_file_path, '') AS cheque_file_path,
-            COALESCE(p.payment_method, '') AS payment_method, p.currency_id, COALESCE(p.exchange_rate, 1)::float AS rate,
+            COALESCE(p.payment_method, '') AS payment_method, p.currency_id, COALESCE(p.exchange_rate, 1)::text AS rate,
             COALESCE(c.symbol, '€') AS symbol
      FROM payments p
      LEFT JOIN currencies c ON c.id = p.currency_id
@@ -97,14 +82,15 @@ export async function loadWallet(user: AccessUser, query: string, page: number, 
      ORDER BY p.payment_date ASC NULLS LAST, p.payment_time ASC NULLS LAST, p.id ASC`,
     params,
   );
-  let running = 0;
-  const chronological = (listed.rows as RawPayment[]).map((row) => {
-    if (row.status === "A") {
-      const signed = row.type === "DR" ? euroAmount(row) : -euroAmount(row);
-      running = Math.round((running + signed) * 100) / 100;
-    }
-    return { row, balance: running };
-  });
+  const rows = listed.rows as RawPayment[];
+  const runningBalances = runningLedgerBalances(rows.map((row) => ({
+    status: row.status,
+    type: row.type,
+    amount: row.amount,
+    currencyId: row.currency_id,
+    exchangeRate: row.rate,
+  })));
+  const chronological = rows.map((row, index) => ({ row, balance: runningBalances[index] ?? "0" }));
   const term = query.trim().toLowerCase();
   const filtered = chronological.filter(({ row }) => {
     if (!term) return true;
@@ -132,17 +118,17 @@ export async function loadWallet(user: AccessUser, query: string, page: number, 
       receiver: row.payment_receiver,
       location: row.payment_received_location,
       description: row.description,
-      amountLabel: money(row.symbol, row.amount),
+      amountLabel: formatLedgerMoney(row.symbol, row.amount),
       documentHref: document ? mediaUrl(document) : "",
-      euroRate: row.currency_id === 1 ? `${row.rate} ${row.symbol}` : "",
+      euroRate: row.currency_id === 1 ? `${addDecimal(row.rate, "0")} ${row.symbol}` : "",
       status,
-      balanceLabel: money("€", balance),
+      balanceLabel: formatLedgerMoney("€", balance),
     } satisfies WalletEntry;
   });
   return {
-    canAdd: personal,
+    canAdd: user.agentId != null || user.subAgentId != null,
     invoiceNo: newInvoiceNo(),
-    balanceLabel: money("€", Number(balance.rows[0]?.balance ?? 0)),
+    balanceLabel: formatLedgerMoney("€", String(balance.rows[0]?.balance ?? "0")),
     currencies: (currencies.rows as Array<{ id: number; short_name: string | null; symbol: string | null }>).map((row) => ({
       id: row.id,
       label: `${row.short_name ?? "Currency"} (${row.symbol ?? ""})`.trim(),

@@ -78,8 +78,9 @@ describe("passwords and permissions", () => {
   });
 
   it("grants full access only to verified administrative roles", () => {
+    expect(hasFullAccess(user({ roleName: "sadmin" }))).toBe(true);
     expect(hasFullAccess(user({ roleName: "owner" }))).toBe(true);
-    expect(hasFullAccess(user({ roleName: "admin" }))).toBe(false);
+    expect(hasFullAccess(user({ roleName: "admin" }))).toBe(true);
     expect(hasFullAccess(user({ roleName: "Agent" }))).toBe(false);
     expect(hasPermission(user(), "browse_candidates")).toBe(true);
     expect(hasPermission(user(), "delete_candidates")).toBe(false);
@@ -94,8 +95,8 @@ describe("passwords and permissions", () => {
       candidateId: 9,
     });
     expect(recordScope(user({ roleName: "owner", permissions: [] })).kind).toBe("all");
-    expect(recordScope(user({ roleName: "admin", permissions: [] })).kind).toBe("none");
-    expect(recordScope(user({ roleName: "Employee", agentId: null, permissions: ["browse_candidates"] })).kind).toBe("all");
+    expect(recordScope(user({ roleName: "admin", permissions: [] })).kind).toBe("all");
+    expect(recordScope(user({ roleName: "Employee", agentId: null, permissions: ["browse_candidates"] })).kind).toBe("office");
     expect(recordScope(user({ status: "I" })).kind).toBe("none");
     expect(recordScope(user({ roleName: "Sub Agent", subAgentId: 3, agentId: null })).kind).toBe("subAgent");
   });

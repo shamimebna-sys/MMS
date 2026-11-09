@@ -24,7 +24,9 @@ if (fs.existsSync(envPath)) {
 
 const authSecret = randomBytes(32).toString("base64url");
 const body = [
+  "# Primary local development database. Automated tests must not use this URL.",
   `DATABASE_URL=postgresql://mms:${password}@127.0.0.1:54329/mms_dev`,
+  "# Isolated test database. npm test reads only this URL and refuses every other target.",
   `DATABASE_URL_TEST=postgresql://mms:${password}@127.0.0.1:54329/mms_test`,
   `AUTH_SECRET=${authSecret}`,
   "AUTH_ISSUER=mms",

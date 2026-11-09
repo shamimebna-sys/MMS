@@ -13,17 +13,19 @@ jobs:
         env:
           POSTGRES_USER: mms
           POSTGRES_PASSWORD: mms_ci
-          POSTGRES_DB: mms_ci
-        ports:
-          - 5432:5432
+          POSTGRES_DB: mms_test
+    ports:
+      - 54329:5432
         options: >-
-          --health-cmd "pg_isready -U mms -d mms_ci"
+          --health-cmd "pg_isready -U mms -d mms_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://mms:mms_ci@127.0.0.1:5432/mms_ci
-      DATABASE_URL_TEST: postgresql://mms:mms_ci@127.0.0.1:5432/mms_ci
+      # Ephemeral CI database only. There is no developer primary database in this job.
+      # Prisma migrate uses DATABASE_URL. Integration tests read DATABASE_URL_TEST and refuse any other target.
+      DATABASE_URL: postgresql://mms:mms_ci@127.0.0.1:54329/mms_test
+      DATABASE_URL_TEST: postgresql://mms:mms_ci@127.0.0.1:54329/mms_test
       AUTH_SECRET: ci-secret-at-least-32-characters-long
       AUTH_ISSUER: mms
       AUTH_AUDIENCE: mms-web

@@ -1,6 +1,7 @@
 import { hasGrant, type AccessUser } from "@/lib/auth/permissions";
 import { pool } from "@/lib/db";
 import type { NavGroup } from "@/components/shell/app-shell";
+import { resolveResource } from "@/server/resources";
 
 type MenuRow = {
   id: number;
@@ -26,7 +27,7 @@ function hrefFor(item: MenuRow, tables: Map<string, string>): string | null {
   if (match) {
     const slug = match[1];
     if (SKIPPED_SLUGS.has(slug)) return null;
-    if (slug === "media" || slug === "settings" || tables.has(slug)) return `/records/${slug}`;
+    if (slug === "media" || slug === "settings" || tables.has(slug) || resolveResource(slug)) return `/records/${slug}`;
     return null;
   }
   if (route === "admin.my.candidate.create") return "/records/candidates/new";

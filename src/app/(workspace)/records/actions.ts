@@ -54,7 +54,7 @@ export async function createPaymentAction(_state: ActionState | undefined, formD
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form." };
   let id = 0;
   try {
-    id = await createPaymentRecord(user, parsed.data, await requestIp());
+    id = await createPaymentRecord(user, parsed.data, await requestIp(), String(formData.get("idempotency_key") ?? ""));
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Could not save the payment." };
   }

@@ -37,6 +37,10 @@ model Agencier {
   bankSwiftNo String? @map("bank_swift_no") @db.VarChar(200)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
   @@index([countryId])
+  candidateAgencierLinks Candidate[] @relation("Candidate_agencierId")
+  invoiceAgencierLinks Invoice[] @relation("Invoice_agenciersId")
+  ticketInvoiceAgencierLinks TicketInvoice[] @relation("TicketInvoice_agencierId")
+  userAgencierLinks User[] @relation("User_agencierId")
   @@map("agenciers")
 }
 
@@ -105,6 +109,10 @@ model Agent {
   @@index([permanentAddressThanaId])
   @@index([permanentAddressDistrictId])
   @@index([permanentAddressDivisionId])
+  subAgentLinks SubAgent[] @relation("SubAgent_agentId")
+  candidateAgentLinks Candidate[] @relation("Candidate_agentId")
+  paymentRequestAgentLinks PaymentRequest[] @relation("PaymentRequest_agentId")
+  ticketInvoiceAgentLinks TicketInvoice[] @relation("TicketInvoice_agentId")
   @@map("agents")
 }
 
@@ -243,6 +251,10 @@ model Candidate {
   replacedByCandidateId Int? @map("replaced_by_candidate_id")
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
   replacedByCandidateIdRef Candidate? @relation("Candidate_replacedByCandidateId", fields: [replacedByCandidateId], references: [id], onDelete: SetNull)
+  agentIdRef Agent? @relation("Candidate_agentId", fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  subAgentIdRef SubAgent? @relation("Candidate_subAgentId", fields: [subAgentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  agencierIdRef Agencier? @relation("Candidate_agencierId", fields: [agencierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  companierIdRef Companier? @relation("Candidate_companierId", fields: [companierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   @@index([createdAt])
   @@index([agentId])
   @@index([classGroupId])
@@ -262,7 +274,28 @@ model Candidate {
   @@index([subAgentId])
   @@index([countryId])
   candidateLinks0 Candidate[] @relation("Candidate_replacedByCandidateId")
+  ticketInvoiceCandidateLinks TicketInvoice[] @relation("TicketInvoice_candidateId")
+  userCandidateLinks User[] @relation("User_candidateId")
+  employerCandidateLinks EmployerCandidate[] @relation("EmployerCandidate_candidateId")
+  candidatePassportLinks CandidatePassport[] @relation("CandidatePassport_candidateId")
   @@map("candidates")
+}
+
+// Passport history for one candidate. The current number stays on candidates.passport_no.
+// Existing rows are not copied here: the live column is already that candidate's current passport,
+// and the stored duplicate groups must stay unchanged.
+model CandidatePassport {
+  id Int @id @default(autoincrement())
+  candidateId Int @map("candidate_id")
+  passportNo String @map("passport_no") @db.VarChar(250)
+  passportIssueDate DateTime? @map("passport_issue_date") @db.Date
+  passportExpireDate DateTime? @map("passport_expire_date") @db.Date
+  passportFilePath String? @map("passport_file_path") @db.Text
+  replacedAt DateTime @default(now()) @map("replaced_at") @db.Timestamptz(6)
+  candidateIdRef Candidate @relation("CandidatePassport_candidateId", fields: [candidateId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  @@index([candidateId])
+  @@index([passportNo])
+  @@map("candidate_passports")
 }
 
 model CandidateDocument {
@@ -351,6 +384,10 @@ model Companier {
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
   @@index([countryId])
+  candidateCompanierLinks Candidate[] @relation("Candidate_companierId")
+  invoiceCompanierLinks Invoice[] @relation("Invoice_companierId")
+  licenseCompanierLinks License[] @relation("License_companierId")
+  ticketInvoiceCompanierLinks TicketInvoice[] @relation("TicketInvoice_companierId")
   @@map("companiers")
 }
 
@@ -558,6 +595,7 @@ model EmployerCandidate {
   id Int @id @default(autoincrement())
   employerId Int? @map("employer_id")
   candidateId Int? @map("candidate_id")
+  candidateIdRef Candidate? @relation("EmployerCandidate_candidateId", fields: [candidateId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   purpose String? @db.VarChar(100)
   createdAt DateTime? @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
@@ -696,6 +734,8 @@ model Invoice {
   bankSwiftNo String? @map("bank_swift_no") @db.VarChar(250)
   bankIbanNo String? @map("bank_iban_no") @db.VarChar(250)
   oldInvoiceNo String? @map("old_invoice_no") @db.VarChar(200)
+  agenciersIdRef Agencier? @relation("Invoice_agenciersId", fields: [agenciersId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  companierIdRef Companier? @relation("Invoice_companierId", fields: [companierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   @@index([agenciersId])
   @@index([companierId])
   @@index([countryId])
@@ -790,6 +830,7 @@ model License {
   createdAt DateTime? @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
   companierId Int? @map("companier_id")
+  companierIdRef Companier? @relation("License_companierId", fields: [companierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   licenseStartDate DateTime? @map("license_start_date") @db.Date
   licenseExpireDate DateTime? @map("license_expire_date") @db.Date
   licenseFilePath String? @map("license_file_path") @db.Text
@@ -964,6 +1005,8 @@ model Payment {
   description String? @db.Text
   requestId Int? @map("request_id")
   devRemarks String? @map("dev_remarks") @db.VarChar(250)
+  idempotencyKey String? @map("idempotency_key") @db.VarChar(36)
+  @@unique([idempotencyKey])
   @@index([agentId])
   @@index([subAgentId])
   @@index([candidateId])
@@ -988,6 +1031,7 @@ model PaymentRequest {
   remarks String? @db.VarChar(255)
   createdAt DateTime? @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  agentIdRef Agent? @relation("PaymentRequest_agentId", fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   @@index([agentId])
   @@index([groupId])
   @@index([candidateId])
@@ -1218,6 +1262,10 @@ model SubAgent {
   createdAt DateTime? @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  agentIdRef Agent @relation("SubAgent_agentId", fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  candidateSubAgentLinks Candidate[] @relation("Candidate_subAgentId")
+  subAgentPaymentRequestLinks SubAgentPaymentRequest[] @relation("SubAgentPaymentRequest_subAgentId")
+  userSubAgentLinks User[] @relation("User_subAgentId")
   @@index([agentId])
   @@index([presentAddressThanaId])
   @@index([presentAddressDistrictId])
@@ -1240,6 +1288,7 @@ model SubAgentPaymentRequest {
   remarks String? @db.VarChar(255)
   createdAt DateTime? @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  subAgentIdRef SubAgent? @relation("SubAgentPaymentRequest_subAgentId", fields: [subAgentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   @@index([subAgentId])
   @@index([groupId])
   @@index([candidateId])
@@ -1406,6 +1455,10 @@ model TicketInvoice {
   canceledAt DateTime? @map("canceled_at") @db.Timestamptz(6)
   canceledBy Int? @map("canceled_by")
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
+  agencierIdRef Agencier? @relation("TicketInvoice_agencierId", fields: [agencierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  companierIdRef Companier? @relation("TicketInvoice_companierId", fields: [companierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  agentIdRef Agent? @relation("TicketInvoice_agentId", fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  candidateIdRef Candidate? @relation("TicketInvoice_candidateId", fields: [candidateId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   @@index([ticketCompanyId])
   @@index([companierId])
   @@index([agencierId])
@@ -1533,6 +1586,9 @@ model User {
   createdAt DateTime? @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime? @map("updated_at") @db.Timestamptz(6)
   roleIdRef Role? @relation("User_roleId", fields: [roleId], references: [id])
+  candidateIdRef Candidate? @relation("User_candidateId", fields: [candidateId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  subAgentIdRef SubAgent? @relation("User_subAgentId", fields: [subAgentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  agencierIdRef Agencier? @relation("User_agencierId", fields: [agencierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   @@unique([email])
   @@index([roleId])
   @@index([userTypeId])
@@ -1667,6 +1723,8 @@ model MigrationRun {
   startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
   finishedAt  DateTime? @map("finished_at") @db.Timestamptz(6)
   report      Json?
+  tableResults MigrationTableResult[]
+  quarantineRows MigrationQuarantine[]
 
   @@map("migration_runs")
 }
@@ -1683,6 +1741,7 @@ model MigrationTableResult {
   transformedRows Int    @map("transformed_rows")
   status        String   @db.VarChar(32)
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  run           MigrationRun @relation(fields: [runId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@unique([runId, sourceTable])
   @@map("migration_table_results")
@@ -1696,6 +1755,7 @@ model MigrationQuarantine {
   reason      String   @db.VarChar(200)
   rowData     Json     @map("row_data")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  run         MigrationRun @relation(fields: [runId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([runId, sourceTable])
   @@map("migration_quarantine")
@@ -1754,4 +1814,46 @@ model StoredFile {
 
   @@index([ownerTable, ownerId])
   @@map("stored_files")
+}
+
+/// Distinct historical assignment for Agent, Sub-Agent, Agencier, and Companier.
+/// Not agencies, companies, or employer_candidates.
+/// candidateId, partyId, and closedByUserId have no foreign keys: A05-09 is still proposed.
+/// A missing parent does not delete the row.
+/// Agent and Sub-Agent do not have one canonical original address. Their present and
+/// permanent parts are stored separately, including null and empty string. They are not
+/// concatenated. originalAddress is only the Agencier or Companier address column.
+/// becameActiveAt is the activation time. Creation and update timestamps are omitted
+/// so those names cannot be mistaken for activation time.
+/// One ACTIVE row per candidate and category is the partial unique index
+/// historical_party_assignments_one_active in the migration. A full unique index is
+/// not declared here because CLOSED rows for the same pair must remain.
+model HistoricalPartyAssignment {
+  id Int @id @default(autoincrement())
+  candidateId Int @map("candidate_id")
+  partyCategory String @map("party_category") @db.VarChar(20)
+  partyId Int @map("party_id")
+  originalName String @map("original_name") @db.VarChar(255)
+  originalAddress String? @map("original_address") @db.VarChar(255)
+  presentAddressHouse String? @map("present_address_house") @db.VarChar(200)
+  presentAddressRoad String? @map("present_address_road") @db.VarChar(20)
+  presentAddressVillage String? @map("present_address_village") @db.VarChar(20)
+  presentAddressPost String? @map("present_address_post") @db.VarChar(20)
+  presentAddressThanaId Int? @map("present_address_thana_id")
+  presentAddressDistrictId Int? @map("present_address_district_id")
+  presentAddressDivisionId Int? @map("present_address_division_id")
+  permanentAddressHouse String? @map("permanent_address_house") @db.VarChar(200)
+  permanentAddressRoad String? @map("permanent_address_road") @db.VarChar(20)
+  permanentAddressVillage String? @map("permanent_address_village") @db.VarChar(20)
+  permanentAddressPost String? @map("permanent_address_post") @db.VarChar(20)
+  permanentAddressThanaId Int? @map("permanent_address_thana_id")
+  permanentAddressDistrictId Int? @map("permanent_address_district_id")
+  permanentAddressDivisionId Int? @map("permanent_address_division_id")
+  status String @db.VarChar(10)
+  becameActiveAt DateTime @map("became_active_at") @db.Timestamptz(6)
+  closureReason String? @map("closure_reason") @db.Text
+  closedByUserId Int? @map("closed_by_user_id")
+  closedAt DateTime? @map("closed_at") @db.Timestamptz(6)
+
+  @@map("historical_party_assignments")
 }

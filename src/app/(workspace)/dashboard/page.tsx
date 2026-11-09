@@ -15,8 +15,9 @@ import { CongratulationsCarousel } from "@/components/dashboard/congratulations-
 import { PipelineChart } from "@/components/dashboard/pipeline-chart";
 import { isImagePath, mediaUrl } from "@/lib/media";
 import { formatMoney } from "@/lib/utils";
+import { canOperateClassSchedule } from "@/lib/class-schedules";
 import { loadDashboard, type ScheduleRow } from "@/server/dashboard";
-import { requireUser } from "@/server/current-user";
+import { requireUser, sessionRoleLabel } from "@/server/current-user";
 
 export const dynamic = "force-dynamic";
 
@@ -67,9 +68,9 @@ function EmptyNote({ children }: { children: ReactNode }) {
   );
 }
 
-function SchedulePanel({ title, rows, empty }: { title: string; rows: ScheduleRow[]; empty: string }) {
+function SchedulePanel({ title, rows, empty, action }: { title: string; rows: ScheduleRow[]; empty: string; action?: ReactNode }) {
   return (
-    <WidgetShell title={title}>
+    <WidgetShell title={title} action={action}>
       {rows.length === 0 ? (
         <EmptyNote>{empty}</EmptyNote>
       ) : (
@@ -124,6 +125,7 @@ function KpiCard({
 export default async function DashboardPage() {
   const user = await requireUser();
   const data = await loadDashboard(user);
+  const roleLabel = sessionRoleLabel(user);
   const chart = STAGES.map((item) => ({ name: item.label, count: data.pipeline[item.key] }));
 
   return (
@@ -141,7 +143,7 @@ export default async function DashboardPage() {
             E &amp; A Air International
           </p>
           <h2 className="mt-3 text-[1.75rem] font-semibold tracking-tight leading-tight text-white">
-            Super Admin
+            {roleLabel}
           </h2>
           <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-white/55">
             Signed in. Selection, medical, visa, and flight stay on this desk.
@@ -222,7 +224,21 @@ export default async function DashboardPage() {
 
       {/* ── Schedule panels + summaries ─────────────────── */}
       <section className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <SchedulePanel title="Today's Class" rows={data.classes} empty="No active records found." />
+        <SchedulePanel
+          title="Today's Class"
+          rows={data.classes}
+          empty="No active records found."
+          action={
+            canOperateClassSchedule(user, "browse") ? (
+              <Link
+                href="/records/class-schedules"
+                className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#C9D6E5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#5E738C] transition-colors hover:bg-[#F7FAFD]"
+              >
+                Class Schedules
+              </Link>
+            ) : null
+          }
+        />
         <SchedulePanel
           title="Upcoming Interview Schedule"
           rows={data.interviews}

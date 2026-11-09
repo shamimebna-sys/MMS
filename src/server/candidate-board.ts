@@ -1,4 +1,5 @@
 import type { AccessUser } from "@/lib/auth/permissions";
+import { LIVE_STATUS_CASE } from "@/lib/candidate-live-status";
 import { pool } from "@/lib/db";
 import { assertCanRead, candidateFilterSql, getResource } from "@/server/resources";
 
@@ -107,17 +108,7 @@ const SELECT_LIST = `
   COALESCE((SELECT arc_number FROM arcs WHERE candidate_id = c.id ORDER BY id DESC LIMIT 1), '') AS arc_no,
   COALESCE((SELECT visa_mp_no FROM visa_immigrations WHERE candidate_id = c.id ORDER BY id DESC LIMIT 1), '') AS visa_mp,
   COALESCE((SELECT to_char(expire_date, 'YYYY-MM-DD') FROM labour_contracts WHERE candidate_id = c.id ORDER BY id DESC LIMIT 1), '') AS labour_expire,
-  CASE
-    WHEN EXISTS (SELECT 1 FROM flight_schedules f WHERE f.candidate_id = c.id) THEN 'Flight'
-    WHEN EXISTS (SELECT 1 FROM manpower_trainings m WHERE m.candidate_id = c.id) THEN 'Manpower Status'
-    WHEN EXISTS (SELECT 1 FROM visa_immigrations v WHERE v.candidate_id = c.id) THEN 'Visa'
-    WHEN EXISTS (SELECT 1 FROM medicals m WHERE m.candidate_id = c.id) THEN 'Medical'
-    WHEN EXISTS (SELECT 1 FROM police_clearances p WHERE p.candidate_id = c.id) THEN 'Police'
-    WHEN EXISTS (SELECT 1 FROM labour_contracts l WHERE l.candidate_id = c.id) THEN 'Labour'
-    WHEN EXISTS (SELECT 1 FROM selected_candidates s WHERE s.candidate_id = c.id) THEN 'Selected'
-    WHEN c.class_group_id IS NOT NULL THEN 'Group'
-    ELSE 'Registration'
-  END AS live_status,
+  ${LIVE_STATUS_CASE} AS live_status,
   CASE WHEN EXISTS (SELECT 1 FROM payments p WHERE p.candidate_id = c.id AND btrim(COALESCE(p.status, '')) = 'A') THEN 'Done' ELSE '' END AS payment_label,
   COALESCE(NULLIF(btrim(c.half_photo_file_path), ''), NULLIF(btrim(c.full_photo_file_path), ''), '') AS photo
 `;

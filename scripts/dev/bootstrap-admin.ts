@@ -3,14 +3,13 @@ import { randomBytes } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { hashPassword } from "@/lib/auth/password";
-import { prisma } from "@/lib/db";
+import { closeDb, prisma } from "@/lib/db";
 
 async function main() {
   const email = (process.env.BOOTSTRAP_ADMIN_EMAIL || "bootstrap.admin@mms.local").toLowerCase();
   const role = await prisma.role.findUnique({ where: { name: "sadmin" } });
   if (!role) {
-    console.error("The sadmin role is missing. Run the legacy migration before creating the admin.");
-    process.exit(1);
+    throw new Error("The sadmin role is missing. Run the legacy migration before creating the admin.");
   }
   const existing = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
   if (existing) {
@@ -37,10 +36,20 @@ async function main() {
 }
 
 main()
-  .catch((error) => {
+  .then(() => 0)
+  .catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : "bootstrap failed");
-    process.exit(1);
+    return 1;
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    try {
+      await closeDb();
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : "database shutdown failed");
+      process.exitCode = 1;
+    }
+  })
+  .then((code) => {
+    const exitCode = code || process.exitCode || 0;
+    if (exitCode) process.exit(exitCode);
   });

@@ -1,4 +1,5 @@
 import type { AccessUser } from "@/lib/auth/permissions";
+import { journeyCompletionFromSource, type JourneyCompletion } from "@/lib/candidate-journey-status";
 import { pool } from "@/lib/db";
 import type { FormField } from "@/server/bread-form";
 import { getResource, visibilitySql } from "@/server/resources";
@@ -16,19 +17,20 @@ export type CandidateFile = {
   agency: string;
   photo: string;
   chips: CandidateChip[];
+  journey: JourneyCompletion;
 };
 
-const STAMP_HIDDEN = new Set([
-  "father_name",
-  "mother_name",
-  "gender",
-  "dob",
-  "bid",
-  "nid",
-  "bid_file_path",
-  "nid_file_path",
-  "cv_file_path",
-]);
+const STAMP_FIELDS = [
+  "code",
+  "name",
+  "country_id",
+  "passport_no",
+  "passport_issue_date",
+  "passport_expire_date",
+  "passport_file_path",
+  "stamp_file_path",
+  "remarks",
+];
 
 const BASIC_FIELDS = [
   "nationality",
@@ -88,7 +90,8 @@ export const CANDIDATE_STEPS = [
   { step: 7, label: "Flight Schedule", href: (id: number) => `/records/flight-schedules?candidate=${id}` },
   { step: 8, label: "ARC", href: (id: number) => `/records/arcs?candidate=${id}` },
   { step: 9, label: "Labour Contract", href: (id: number) => `/records/labour-contracts?candidate=${id}` },
-  { step: 10, label: "Document", href: (id: number) => `/records/candidate-documents/new?candidate=${id}` },
+  { step: 10, label: "Document", href: (id: number) => `/records/candidate-documents?candidate=${id}&create=1` },
+  { step: 11, label: "Payment", href: (id: number) => `/records/payment-requests?candidate=${id}&create=1` },
 ] as const;
 
 export const CANDIDATE_STEP_BY_SLUG: Record<string, number> = {
@@ -100,6 +103,8 @@ export const CANDIDATE_STEP_BY_SLUG: Record<string, number> = {
   arcs: 8,
   "labour-contracts": 9,
   "candidate-documents": 10,
+  "payment-requests": 11,
+  payment_requests: 11,
 };
 
 function groupMark(name: string): string {
@@ -114,7 +119,7 @@ export function presentCandidateFields(fields: FormField[], stamp: boolean): For
     const existing = byName.get(field.name);
     if (!existing || (existing.input !== "select" && field.input === "select")) byName.set(field.name, field);
   }
-  const visibleNames = BASIC_FIELDS.filter((name) => (stamp ? name === "stamp_file_path" || !STAMP_HIDDEN.has(name) : name !== "stamp_file_path"));
+  const visibleNames = stamp ? STAMP_FIELDS : BASIC_FIELDS.filter((name) => name !== "stamp_file_path");
   const visible = visibleNames.flatMap((name) => {
     const field = byName.get(name);
     return field ? [field] : [];
@@ -139,11 +144,15 @@ export async function loadCandidateFile(user: AccessUser, id: number): Promise<C
             COALESCE(NULLIF(btrim(c.half_photo_file_path), ''), NULLIF(btrim(c.full_photo_file_path), ''), '') AS photo,
             COALESCE(g.name, '') AS group_name,
             (c.cv_file_path IS NOT NULL AND btrim(c.cv_file_path) <> '') AS cv,
+            (c.stamp_file_path IS NOT NULL AND btrim(c.stamp_file_path) <> '') AS stamp,
             EXISTS (SELECT 1 FROM labour_contracts x WHERE x.candidate_id = c.id) AS labour,
             EXISTS (SELECT 1 FROM police_clearances x WHERE x.candidate_id = c.id) AS police,
-            EXISTS (SELECT 1 FROM visa_immigrations x WHERE x.candidate_id = c.id) AS visa,
             EXISTS (SELECT 1 FROM medicals x WHERE x.candidate_id = c.id) AS medical,
+            EXISTS (SELECT 1 FROM visa_immigrations x WHERE x.candidate_id = c.id) AS visa,
+            EXISTS (SELECT 1 FROM manpower_trainings x WHERE x.candidate_id = c.id) AS bmet,
             EXISTS (SELECT 1 FROM arcs x WHERE x.candidate_id = c.id) AS arc,
+            EXISTS (SELECT 1 FROM candidate_documents x WHERE x.candidate_id = c.id) AS document,
+            EXISTS (SELECT 1 FROM payment_requests x WHERE x.candidate_id = c.id) AS payment_request,
             EXISTS (
               SELECT 1 FROM payments p
               WHERE p.candidate_id = c.id AND btrim(COALESCE(p.status, '')) = 'A' AND p.title ILIKE 'Manpower%'
@@ -166,16 +175,28 @@ export async function loadCandidateFile(user: AccessUser, id: number): Promise<C
     agency: String(row.agency ?? ""),
     photo: String(row.photo ?? ""),
     chips: [
-      { label: "Registration", mark: "✓" },
-      { label: "CV Upload", mark: yes(row.cv) },
-      { label: "Class Group", mark: groupMark(String(row.group_name ?? "")) },
+      { label: "Registration", mark: "✓", href: `/records/candidates/${id}` },
+      { label: "CV Upload", mark: yes(row.cv), href: `/records/candidate-documents?candidate=${id}&create=1` },
+      { label: "Class Group", mark: groupMark(String(row.group_name ?? "")), href: `/records/candidates/${id}` },
       { label: "Labour", mark: yes(row.labour), href: q("labour-contracts") },
       { label: "Police Clear.", mark: yes(row.police), href: q("police-clearances") },
       { label: "Visa", mark: yes(row.visa), href: q("visa-immigrations") },
-      { label: "BMET Train.", mark: yes(row.medical), href: q("medicals") },
+      { label: "BMET Train.", mark: yes(row.bmet), href: q("manpower-trainings") },
       { label: "ARC", mark: yes(row.arc), href: q("arcs") },
-      { label: "Manpower", mark: yes(row.manpower) },
+      { label: "Manpower", mark: yes(row.manpower), href: `/records/payment-requests?candidate=${id}&create=1&bill_type=manpower` },
       { label: "Flight", mark: yes(row.flight), href: q("flight-schedules") },
     ],
+    journey: journeyCompletionFromSource({
+      stamp: row.stamp,
+      police: row.police,
+      medical: row.medical,
+      visa: row.visa,
+      manpowerTraining: row.bmet,
+      flight: row.flight,
+      arc: row.arc,
+      labour: row.labour,
+      document: row.document,
+      paymentRequest: row.payment_request,
+    }),
   };
 }

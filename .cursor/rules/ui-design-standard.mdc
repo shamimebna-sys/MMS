@@ -1,0 +1,45 @@
+---
+description: ManPower UI standard — match the Register Vehicle modal on new or improved UI only. Preserve all business logic.
+alwaysApply: true
+---
+
+# UI/UX design standard
+
+Visual benchmark: `.cursor/rules/reference-register-vehicle.png` (Hopline ERP Register Vehicle modal). Read it before creating or restyling UI.
+
+This is a presentation standard. It is not permission to redesign the app.
+
+## When it applies
+
+Apply only to UI you are asked to create or improve: new pages, forms, modals, dashboards, tables, filters, dialogs, and shared components you are already editing.
+
+Leave every other page and component untouched. Do not restyle a file because it is open or because it does not yet match this standard.
+
+## Do not change behavior
+
+Preserve business logic, Prisma models, migrations, database schemas, APIs, server actions, validation, permissions, auth, workflows, field names, routes, data shapes, and API contracts. Do not remove features. Trace submit, state, and server behavior before editing a form, and keep that path working.
+
+## Visual language
+
+Match the reference: white surfaces, near-white page background, dark navy text, muted secondary text, thin neutral borders, moderate radius (about 8–12px), soft shadows, compact spacing, clear type hierarchy. No gradients, oversized type, nested cards, or extra colors.
+
+Primary actions are solid red with white text (reference Save / Register Vehicle). Secondary actions are white with a thin border (Cancel). Destructive actions stay visually distinct from primary. One style per control type on any screen you touch.
+
+Reuse before adding: `Button` (`src/components/ui/button.tsx`), `.control`, `.surface`, `.btn-primary`, `.btn-quiet`, `.data-grid`, `ListingShell`, `StatusPill`, Radix Dialog, and `RoleSelect`. Extend those. Do not invent a second button, input, or modal style. Do not retoken `--accent` globally unless the task asks for it; that would restyle untouched screens. On a screen you are improving, primary actions follow the reference red.
+
+## Forms and modals
+
+- Centered white dialog, dark translucent backdrop, header title plus one-line subtitle, close control in the header.
+- Scrollable body. Sticky footer with Cancel then the red primary action, right-aligned.
+- Sections: short title, one-line description, then a subtle divider. No cards inside the dialog.
+- Labels above fields. Responsive grid: 1 column on small screens, 2–3 on desktop. Same input height, radius, border, and focus ring (`.control`).
+- Searchable selects for long lists. Keep existing option values and selection behavior.
+- Disabled, loading, error, and success states stay visible. Keyboard focus stays inside the dialog while it is open.
+
+## Listings
+
+Page title and short description, primary add action, search and filter toolbar, `.data-grid` table, status pills, consistent view / edit / delete actions, and empty, loading, and error states. Keep a different layout when the feature needs one.
+
+## Done when
+
+The touched UI matches the reference, existing behavior still works, unrelated files are unchanged, and TypeScript plus relevant tests pass.

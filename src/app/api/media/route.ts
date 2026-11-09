@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/server/current-user";
+import { canReadMediaPath } from "@/server/media-access";
 
 export const dynamic = "force-dynamic";
 
 const STORAGE_ROOT = (process.env.LEGACY_STORAGE_URL || "https://eujobbd.com/storage").replace(/\/$/, "");
-const SAFE_PATH = /^[A-Za-z0-9][A-Za-z0-9_./-]{0,240}$/;
 
-/** Same-origin stand-in for Voyager storage so photos render under the app content policy. */
+/** Same-origin stand-in for Voyager storage. Public files stay public. Every other file needs a matching record in scope. */
 export async function GET(request: Request) {
   const raw = new URL(request.url).searchParams.get("path") ?? "";
   const path = decodeURIComponent(raw).replace(/^\/+/, "");
-  if (!SAFE_PATH.test(path) || path.includes("..")) {
+  const user = await getCurrentUser();
+  if (!(await canReadMediaPath(user, path))) {
     return new NextResponse("Not found", { status: 404 });
   }
   const upstream = await fetch(`${STORAGE_ROOT}/${path}`, { redirect: "error" });

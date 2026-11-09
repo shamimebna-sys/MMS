@@ -1,4 +1,12 @@
 import { hasGrant, type AccessUser } from "@/lib/auth/permissions";
+import { isSettingsSlug } from "@/lib/settings";
+import { arcDataType, arcFieldRows, isArcSlug } from "@/lib/arc-records";
+import { isMoneyReceiptSlug, moneyReceiptDataType, moneyReceiptFieldRows } from "@/lib/money-receipts";
+import { isSubAgentPaymentRequestSlug, subAgentPaymentRequestDataType, subAgentPaymentRequestFieldRows } from "@/lib/sub-agent-payment-requests";
+import { classScheduleDataType, classScheduleFieldRows, isClassScheduleSlug } from "@/lib/class-schedules";
+import { euroToBdtRateDataType, euroToBdtRateFieldRows, isEuroToBdtRateSlug } from "@/lib/euro-to-bdt-rates";
+import { currencyDataType, currencyFieldRows, isCurrencySlug } from "@/lib/currencies";
+import { isTicketInvoiceMoneyReceiptSlug, ticketInvoiceMoneyReceiptDataType, ticketInvoiceMoneyReceiptFieldRows } from "@/lib/ticket-invoice-money-receipts";
 import { pool } from "@/lib/db";
 import { statusLabel } from "@/lib/utils";
 import { assertCanRead, quoteIdent, resolveResource, visibilitySql, type ResourceDef, type ScopeMode } from "@/server/resources";
@@ -64,7 +72,7 @@ function labelExpr(alias: string, label: string | undefined, columns: Set<string
   const quoted = (column: string) => `${alias}.${quoteIdent(column)}`;
   const pair = (code: string, name: string) =>
     `trim(both ' ' FROM concat_ws(' ', CASE WHEN ${quoted(code)} IS NULL OR btrim(${quoted(code)}::text) = '' THEN NULL ELSE '(' || ${quoted(code)}::text || ')' END, ${quoted(name)}::text))`;
-  if ((label === "agent_details_info" || label === "teacher_info" || label === "candidate_details_info" || label === "group_info") && columns.has("code") && columns.has("name")) {
+  if ((label === "agent_details_info" || label === "teacher_info" || label === "candidate_details_info" || label === "group_info" || label === "sub_agent_details_info") && columns.has("code") && columns.has("name")) {
     return pair("code", "name");
   }
   if (label && columns.has(label)) return `${quoted(label)}::text`;
@@ -157,7 +165,9 @@ function piecesFor(fields: FieldRow[], table: string, columns: Map<string, Set<s
   return { selects, joins };
 }
 
-async function loadType(slug: string): Promise<{ id: number; slug: string; table: string; title: string } | null> {
+type LoadedType = { id: number; slug: string; table: string; title: string; synthetic?: boolean };
+
+async function loadType(slug: string): Promise<LoadedType | null> {
   const result = await pool.query(
     `SELECT id, slug, name, display_name_plural
      FROM data_types
@@ -166,8 +176,32 @@ async function loadType(slug: string): Promise<{ id: number; slug: string; table
     [slug],
   );
   const row = result.rows[0] as { id: number; slug: string; name: string; display_name_plural: string } | undefined;
-  if (!row) return null;
-  return { id: row.id, slug: row.slug, table: row.name, title: row.display_name_plural };
+  if (row) return { id: row.id, slug: row.slug, table: row.name, title: row.display_name_plural };
+  if (isArcSlug(slug)) return arcDataType("list");
+  if (isMoneyReceiptSlug(slug)) return moneyReceiptDataType("list");
+  if (isSubAgentPaymentRequestSlug(slug)) return subAgentPaymentRequestDataType("list");
+  if (isClassScheduleSlug(slug)) return classScheduleDataType("list");
+  if (isEuroToBdtRateSlug(slug)) return euroToBdtRateDataType("list");
+  if (isCurrencySlug(slug)) return currencyDataType("list");
+  if (isTicketInvoiceMoneyReceiptSlug(slug)) return ticketInvoiceMoneyReceiptDataType("list");
+  return null;
+}
+
+async function breadFields(type: LoadedType, flag: "browse" | "read"): Promise<FieldRow[]> {
+  if (type.synthetic) {
+    if (type.table === "invoice_money_receipts") return moneyReceiptFieldRows(flag);
+    if (type.table === "sub_agent_payment_requests") return subAgentPaymentRequestFieldRows(flag);
+    if (type.table === "class_schedules") return classScheduleFieldRows(flag);
+    if (type.table === "euro_to_bdt_rates") return euroToBdtRateFieldRows(flag);
+    if (type.table === "currencies") return currencyFieldRows(flag);
+    if (type.table === "ticket_invoice_money_receipts") return ticketInvoiceMoneyReceiptFieldRows(flag);
+    return arcFieldRows(flag);
+  }
+  const result = await pool.query(
+    `SELECT field, type, display_name, details FROM data_rows WHERE data_type_id = $1 AND ${flag} = 1 ORDER BY "order", id`,
+    [type.id],
+  );
+  return result.rows as FieldRow[];
 }
 
 function formatCell(label: string, value: unknown): string {
@@ -195,11 +229,7 @@ export async function listBread(
   if (!own) return null;
   const resource = scopeResource(type.table, own);
   assertCanRead(user, resource);
-  const modeResult = await pool.query(
-    `SELECT field, type, display_name, details FROM data_rows WHERE data_type_id = $1 AND browse = 1 ORDER BY "order", id`,
-    [type.id],
-  );
-  const built = piecesFor(modeResult.rows as FieldRow[], type.table, columns);
+  const built = piecesFor(await breadFields(type, "browse"), type.table, columns);
   if (built.selects.length === 0) return null;
   const params: unknown[] = [];
   const visibility = visibilitySql(resource, user, params);
@@ -252,6 +282,10 @@ export async function listBread(
 }
 
 export async function readBread(user: AccessUser, slug: string, id: number): Promise<BreadRecord | null> {
+  if (isSettingsSlug(slug)) {
+    const { readSetting } = await import("@/server/settings");
+    return readSetting(user, id);
+  }
   const type = await loadType(slug);
   if (!type) return null;
   const columns = await columnMap();
@@ -259,12 +293,9 @@ export async function readBread(user: AccessUser, slug: string, id: number): Pro
   if (!own?.has("id")) return null;
   const resource = scopeResource(type.table, own);
   assertCanRead(user, resource);
-  const modeResult = await pool.query(
-    `SELECT field, type, display_name, details FROM data_rows WHERE data_type_id = $1 AND read = 1 ORDER BY "order", id`,
-    [type.id],
-  );
-  const fields = (modeResult.rows as FieldRow[]).filter((field) => field.type !== "password");
-  const built = piecesFor(fields.length ? fields : (modeResult.rows as FieldRow[]), type.table, columns);
+  const modeRows = await breadFields(type, "read");
+  const fields = modeRows.filter((field) => field.type !== "password");
+  const built = piecesFor(fields.length ? fields : modeRows, type.table, columns);
   const params: unknown[] = [id];
   const visibility = visibilitySql(resource, user, params);
   const deleted = own.has("deleted_at") ? " AND t.deleted_at IS NULL" : "";
@@ -285,6 +316,39 @@ export async function readBread(user: AccessUser, slug: string, id: number): Pro
     id,
     fields: built.selects.map((piece) => ({ label: piece.label, value: formatCell(piece.label, row[piece.key]) })),
   };
+}
+
+/**
+ * Module and row gate for `/records/candidates/[id]`.
+ * The detail page does not render this projection, so the field catalog and joins are skipped.
+ * Returns null when the candidates data type does not point at the candidates table, or when
+ * `id` / `deleted_at` are absent. The caller then keeps the general `readBread` gate.
+ * A boolean uses the same `assertCanRead` and the same visibility plus soft-delete predicate as `readBread`.
+ */
+export async function readCandidateDetailAccess(user: AccessUser, id: number): Promise<boolean | null> {
+  const type = await loadType("candidates");
+  if (!type || type.table !== "candidates") return null;
+  const columns = await pool.query(
+    `SELECT column_name
+     FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = $1 AND column_name IN ('id', 'deleted_at')`,
+    [type.table],
+  );
+  const names = new Set((columns.rows as Array<{ column_name: string }>).map((row) => row.column_name));
+  if (!names.has("id") || !names.has("deleted_at")) return null;
+  const resource = resolveResource(type.table);
+  if (!resource) return null;
+  assertCanRead(user, resource);
+  const params: unknown[] = [id];
+  const visibility = visibilitySql(resource, user, params);
+  const result = await pool.query(
+    `SELECT t.id
+     FROM ${quoteIdent(type.table)} t
+     WHERE t.id = $1 AND t.id IN (SELECT id FROM ${quoteIdent(type.table)} WHERE ${visibility}) AND t.deleted_at IS NULL
+     LIMIT 1`,
+    params,
+  );
+  return Boolean(result.rows[0]);
 }
 
 async function listSettings(user: AccessUser, query: string, page: number, pageSize: number): Promise<BreadList> {
@@ -325,38 +389,78 @@ async function listSettings(user: AccessUser, query: string, page: number, pageS
   };
 }
 
+const MEDIA_SOURCES = [
+  { label: "Announcement", table: "announcements", column: "file_path" },
+  { label: "Document", table: "candidate_documents", column: "file_path" },
+  { label: "Medical", table: "medicals", column: "document_file_path" },
+  { label: "Page", table: "pages", column: "image" },
+  { label: "Post", table: "posts", column: "image" },
+] as const;
+
+function shiftPlaceholders(sql: string, offset: number): string {
+  return sql.replace(/\$(\d+)/g, (_match, number: string) => `$${offset + Number(number)}`);
+}
+
+function canReadResource(user: AccessUser, resource: ResourceDef): boolean {
+  try {
+    assertCanRead(user, resource);
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.message === "You do not have access to this module.") return false;
+    throw error;
+  }
+}
+
+function mediaColumns(): BreadColumn[] {
+  return [
+    { key: "source", label: "Source" },
+    { key: "file", label: "File" },
+  ];
+}
+
 async function listMedia(user: AccessUser, page: number, pageSize: number): Promise<BreadList> {
   if (!hasGrant(user, "browse_media")) throw new Error("You do not have access to this module.");
   const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
-  const source = `
-    SELECT 'Announcement' AS source, id, file_path AS file FROM announcements WHERE COALESCE(file_path, '') <> ''
-    UNION ALL
-    SELECT 'Document', id, file_path FROM candidate_documents WHERE COALESCE(file_path, '') <> ''
-    UNION ALL
-    SELECT 'Medical', id, document_file_path FROM medicals WHERE COALESCE(document_file_path, '') <> ''
-    UNION ALL
-    SELECT 'Page', id, image FROM pages WHERE COALESCE(image, '') <> ''
-    UNION ALL
-    SELECT 'Post', id, image FROM posts WHERE COALESCE(image, '') <> ''
-  `;
-  const count = await pool.query(`SELECT COUNT(*)::int AS count FROM (${source}) files`);
-  const rows = await pool.query(
-    `SELECT source, id, file FROM (${source}) files ORDER BY source, id DESC LIMIT $1 OFFSET $2`,
-    [pageSize, (safePage - 1) * pageSize],
-  );
+  const params: unknown[] = [];
+  const parts: string[] = [];
+  for (const source of MEDIA_SOURCES) {
+    const resource = resolveResource(source.table);
+    if (!resource || !canReadResource(user, resource)) continue;
+    const local: unknown[] = [];
+    const visibility = visibilitySql(resource, user, local);
+    if (visibility === "FALSE") continue;
+    const table = quoteIdent(source.table);
+    const column = quoteIdent(source.column);
+    const scoped = shiftPlaceholders(visibility, params.length);
+    params.push(...local);
+    parts.push(
+      `SELECT '${source.label}' AS source, id, ${column} AS file FROM ${table} WHERE COALESCE(${column}, '') <> '' AND id IN (SELECT id FROM ${table} WHERE ${scoped})`,
+    );
+  }
+  const listed: Array<{ source: string; id: number; file: string }> = [];
+  let total = 0;
+  if (parts.length) {
+    const source = parts.join("\nUNION ALL\n");
+    const count = await pool.query(`SELECT COUNT(*)::int AS count FROM (${source}) files`, params);
+    const listParams = params.slice();
+    listParams.push(pageSize, (safePage - 1) * pageSize);
+    const rows = await pool.query(
+      `SELECT source, id, file FROM (${source}) files ORDER BY source, id DESC LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+      listParams,
+    );
+    total = Number(count.rows[0]?.count ?? 0);
+    listed.push(...(rows.rows as Array<{ source: string; id: number; file: string }>));
+  }
   return {
     title: "Media",
     slug: "media",
     table: "media",
-    columns: [
-      { key: "source", label: "Source" },
-      { key: "file", label: "File" },
-    ],
-    rows: (rows.rows as Array<{ source: string; id: number; file: string }>).map((row) => ({
+    columns: mediaColumns(),
+    rows: listed.map((row) => ({
       id: Number(row.id),
       cells: { source: row.source, file: row.file },
     })),
-    total: Number(count.rows[0]?.count ?? 0),
+    total,
     page: safePage,
     pageSize,
   };

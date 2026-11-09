@@ -132,14 +132,16 @@ describe("congratulations carousel", () => {
     expect(banners[2]?.name).toBe("Candidate 3");
 
     const source = readFileSync(path.resolve("src/server/dashboard.ts"), "utf8");
-    const marker = "ORDER BY s.id DESC";
-    const orderAt = source.indexOf(marker);
-    expect(orderAt).toBeGreaterThan(-1);
-    const query = source.slice(orderAt - 500, orderAt + marker.length);
+    const marker = "DISTINCT ON (c.id)";
+    const bannerAt = source.indexOf(marker);
+    const flightAt = source.indexOf("FROM flight_schedules f");
+    expect(bannerAt).toBeGreaterThan(-1);
+    expect(flightAt).toBeGreaterThan(bannerAt);
+    const query = source.slice(bannerAt - 500, flightAt);
     expect(query).toContain("FROM selected_candidates s");
-    expect(query).toContain(marker);
-    expect(query).not.toMatch(/LIMIT\s+\d+/);
-    expect(source.slice(orderAt, orderAt + marker.length + 40)).not.toMatch(/LIMIT/);
+    expect(query).toContain("ORDER BY c.id, s.id DESC");
+    expect(query).toContain("ORDER BY b.selection_id DESC");
+    expect(source.slice(bannerAt, flightAt)).not.toMatch(/LIMIT/i);
   });
 
   it("restarts manual navigation with a single timer", () => {

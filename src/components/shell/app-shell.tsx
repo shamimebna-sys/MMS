@@ -145,6 +145,8 @@ const GROUP_ICON: Record<string, LucideIcon> = {
  */
 const ITEM_ICON: Record<string, LucideIcon> = {
   Dashboard: LayoutDashboard,
+  "Edit profile": UserPen,
+  Notices: Megaphone,
   // Operations / automotive
   Vehicles: CarFront,
   Shipments: Truck,
@@ -415,6 +417,8 @@ function AccountMenu({
   compact = false,
   tone = "sidebar",
   onNavigate,
+  homeHref = "/dashboard",
+  profileHref = "/profile",
 }: {
   userName: string;
   userEmail: string;
@@ -422,6 +426,8 @@ function AccountMenu({
   compact?: boolean;
   tone?: "sidebar" | "header";
   onNavigate?: () => void;
+  homeHref?: string;
+  profileHref?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [place, setPlace] = useState<MenuPlace | null>(null);
@@ -496,7 +502,7 @@ function AccountMenu({
             </div>
             <div className="my-2.5 h-px bg-[#e8eaef]" />
             <Link
-              href="/profile"
+              href={profileHref}
               role="menuitem"
               onClick={closeAndGo}
               className="flex items-center gap-3 rounded-md px-2.5 py-2.5 text-[15px] font-medium leading-5 text-[#111827] transition-colors hover:bg-[#f4f6f8]"
@@ -505,7 +511,7 @@ function AccountMenu({
               Profile
             </Link>
             <Link
-              href="/dashboard"
+              href={homeHref}
               role="menuitem"
               onClick={closeAndGo}
               className="flex items-center gap-3 rounded-md px-2.5 py-2.5 text-[15px] font-medium leading-5 text-[#111827] transition-colors hover:bg-[#f4f6f8]"
@@ -536,7 +542,7 @@ function AccountMenu({
         onClick={toggle}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={ACCOUNT_LABEL}
+        aria-label={tone === "header" ? userName.trim() || "Account" : ACCOUNT_LABEL}
         className={
           tone === "header"
             ? "inline-flex h-9 max-w-full items-center gap-2 rounded-lg border border-border/80 bg-card py-1 pl-1 pr-3 text-left text-foreground transition-colors hover:bg-background"
@@ -551,7 +557,9 @@ function AccountMenu({
             <span className="grid h-7 w-7 shrink-0 overflow-hidden rounded-full">
               <Portrait path={userAvatar} name={userName || "User"} className="h-7 w-7 text-[10px]" />
             </span>
-            <span className="truncate text-[14px] font-semibold leading-none">{ACCOUNT_LABEL}</span>
+            <span className="min-w-0 max-w-[11rem] truncate text-[14px] font-semibold leading-none sm:max-w-[16rem]">
+              {userName.trim() || "User"}
+            </span>
           </>
         ) : compact ? (
           initials(userName)
@@ -583,6 +591,9 @@ export function AppShell({
   userAvatar,
   unread,
   children,
+  homeHref = "/dashboard",
+  profileHref = "/profile",
+  notificationsHref = "/records/notifications",
 }: {
   groups: NavGroup[];
   userName: string;
@@ -590,6 +601,9 @@ export function AppShell({
   userAvatar: string;
   unread: number;
   children: React.ReactNode;
+  homeHref?: string;
+  profileHref?: string;
+  notificationsHref?: string;
 }) {
   const [open, setOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -606,10 +620,11 @@ export function AppShell({
     setOpenSection((current) => (current === title ? null : title));
   }
 
-  const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+  const hrefs = [homeHref, ...groups.flatMap((g) => g.items.map((i) => i.href))];
   const current =
-    groups.flatMap((g) => g.items).find((i) => itemActive(pathname, i.href, hrefs))?.label ??
-    (pathname.startsWith("/dashboard") ? "Dashboard" : "Hopline ERP");
+    [{ href: homeHref, label: "Dashboard" }, ...groups.flatMap((g) => g.items)].find((item) =>
+      itemActive(pathname, item.href, hrefs),
+    )?.label ?? "Hopline ERP";
 
   // ── Desktop sidebar nav tree ──────────────────────────
 
@@ -623,10 +638,10 @@ export function AppShell({
       >
         {/* Dashboard – standalone primary item */}
         <NavItem
-          href="/dashboard"
+          href={homeHref}
           label="Dashboard"
           icon={LayoutDashboard}
-          isActive={pathname.startsWith("/dashboard")}
+          isActive={itemActive(pathname, homeHref, hrefs)}
           expanded={open}
         />
 
@@ -752,7 +767,7 @@ export function AppShell({
           style={{ minHeight: 72 }}
         >
           <Link
-            href="/dashboard"
+            href={homeHref}
             className="grid shrink-0 place-items-center rounded-xl text-[14px] font-bold text-white shadow-md"
             style={{
               width: 36,
@@ -782,11 +797,24 @@ export function AppShell({
         {/* ── User footer ── */}
         {open ? (
           <div className="shrink-0 border-t border-white/[0.07] px-3 py-3">
-            <AccountMenu userName={userName} userEmail={userEmail} userAvatar={userAvatar} />
+            <AccountMenu
+              userName={userName}
+              userEmail={userEmail}
+              userAvatar={userAvatar}
+              homeHref={homeHref}
+              profileHref={profileHref}
+            />
           </div>
         ) : (
           <div className="flex shrink-0 justify-center border-t border-white/[0.07] py-3">
-            <AccountMenu userName={userName} userEmail={userEmail} userAvatar={userAvatar} compact />
+            <AccountMenu
+              userName={userName}
+              userEmail={userEmail}
+              userAvatar={userAvatar}
+              compact
+              homeHref={homeHref}
+              profileHref={profileHref}
+            />
           </div>
         )}
       </aside>
@@ -826,7 +854,7 @@ export function AppShell({
           {/* Right: notifications, theme, account */}
           <div className="flex shrink-0 items-center gap-1.5">
             <Link
-              href="/records/notifications"
+              href={notificationsHref}
               className="relative grid h-9 w-9 place-items-center rounded-lg border border-border/80 bg-card text-foreground/60 transition-colors hover:bg-background hover:text-foreground"
               aria-label="Notifications"
             >
@@ -848,7 +876,14 @@ export function AppShell({
               <Moon className="hidden h-[15px] w-[15px] dark:block" />
             </button>
 
-            <AccountMenu userName={userName} userEmail={userEmail} userAvatar={userAvatar} tone="header" />
+            <AccountMenu
+              userName={userName}
+              userEmail={userEmail}
+              userAvatar={userAvatar}
+              tone="header"
+              homeHref={homeHref}
+              profileHref={profileHref}
+            />
           </div>
         </header>
 
@@ -911,10 +946,10 @@ export function AppShell({
               <div style={{ padding: "8px 12px 16px" }}>
                 {/* Dashboard */}
                 <NavItem
-                  href="/dashboard"
+                  href={homeHref}
                   label="Dashboard"
                   icon={LayoutDashboard}
-                  isActive={pathname.startsWith("/dashboard")}
+                  isActive={itemActive(pathname, homeHref, hrefs)}
                   expanded
                   onClick={() => setMobileOpen(false)}
                 />
@@ -984,6 +1019,8 @@ export function AppShell({
                   userEmail={userEmail}
                   userAvatar={userAvatar}
                   onNavigate={() => setMobileOpen(false)}
+                  homeHref={homeHref}
+                  profileHref={profileHref}
                 />
               </div>
             </nav>

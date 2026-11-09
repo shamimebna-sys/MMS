@@ -1,11 +1,17 @@
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SESSION_COOKIE } from "@/lib/auth/jwt";
 import { verifySessionToken } from "@/lib/auth/jwt";
 import type { AccessUser } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db";
+import { resolveClientIp, trustedProxiesFromEnv } from "@/server/client-ip";
+import { SOCKET_IP_HEADER, verifiedSocketAddress } from "@/server/socket-peer";
 
-export async function getCurrentUser(): Promise<AccessUser | null> {
+// Request-scoped. Outside a React request this calls through, so sessions are never reused across requests.
+export const getCurrentUser = cache(loadCurrentUser);
+
+async function loadCurrentUser(): Promise<AccessUser | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
   const claims = await verifySessionToken(token);
@@ -43,7 +49,23 @@ export async function getCurrentUser(): Promise<AccessUser | null> {
     agencierId: session.user.agencierId,
     companierId: session.user.companierId,
     status,
+    email: session.user.email,
+    avatar: session.user.avatar,
+    roleDisplayName: session.user.roleIdRef?.displayName ?? null,
   };
+}
+
+export function sessionEmail(user: AccessUser): string {
+  return user.email?.trim() || "";
+}
+
+export function sessionAvatar(user: AccessUser): string {
+  return user.avatar?.trim() || "";
+}
+
+/** Shell and dashboard label. Role checks stay on roleName. */
+export function sessionRoleLabel(user: AccessUser): string {
+  return user.roleDisplayName?.trim() || user.roleName?.trim() || "";
 }
 
 export async function requireUser(): Promise<AccessUser> {
@@ -53,7 +75,10 @@ export async function requireUser(): Promise<AccessUser> {
 }
 
 export async function requestIp(): Promise<string | null> {
-  const forwarded = (await headers()).get("x-forwarded-for");
-  if (!forwarded) return null;
-  return forwarded.split(",")[0]?.trim() || null;
+  const headerList = await headers();
+  return resolveClientIp({
+    remoteAddress: verifiedSocketAddress(headerList.get(SOCKET_IP_HEADER)),
+    forwardedFor: headerList.get("x-forwarded-for"),
+    trustedProxies: trustedProxiesFromEnv(),
+  });
 }

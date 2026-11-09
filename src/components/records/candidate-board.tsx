@@ -1,10 +1,14 @@
-import { Plus, Search } from "lucide-react";
+import { Mail, Phone, Plus, Search, type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { RoleSelect } from "@/components/records/role-select";
 import type { CandidateFilters, CandidateRow, FilterOption } from "@/server/candidate-board";
 import { CANDIDATE_PAGE_SIZE } from "@/server/candidate-board";
 import { Portrait } from "@/components/media/portrait";
+import { addLabel, listingCountLabel, listingDescription, statusTone, type StatusTone } from "@/components/records/listing";
+import { ListingPager, ListingShell } from "@/components/records/listing-frame";
 import { RowActions } from "@/components/records/row-actions";
 import { statusLabel } from "@/lib/utils";
+import styles from "./candidate-board.module.css";
 
 function queryString(filters: CandidateFilters, page: number): string {
   const params = new URLSearchParams();
@@ -31,10 +35,29 @@ function SelectFilter({
   value: string;
   options: FilterOption[];
 }) {
+  const caption = label.replace(/^All /, "");
+  if (options.length >= 8) {
+    return (
+      <div className="listing-select">
+        <RoleSelect
+          id={`filter-${name}`}
+          name={name}
+          options={options.map((option) => ({ value: option.id, label: option.label }))}
+          defaultValue={value}
+          emptyLabel={label}
+          searchPlaceholder={`Search ${caption.toLowerCase()}`}
+          listLabel={caption}
+          emptyMessage={`No matching ${caption.toLowerCase()}`}
+          tone="brand"
+          triggerClassName="listing-field"
+        />
+      </div>
+    );
+  }
   return (
-    <label className="grid gap-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-      <span>{label.replace(/^All /, "")}</span>
-      <select name={name} defaultValue={value} className="control text-[13px] normal-case tracking-normal font-normal">
+    <label className="listing-select">
+      <span className="sr-only">{caption}</span>
+      <select name={name} defaultValue={value} className="listing-field" aria-label={caption}>
         <option value="">{label}</option>
         {options.map((option) => (
           <option key={option.id} value={option.id}>
@@ -46,17 +69,77 @@ function SelectFilter({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const label = statusLabel(status) || status || "—";
-  const cls =
-    label === "Active"
-      ? "badge badge-success"
-      : label === "Inactive" || label === "Rejected"
-        ? "badge badge-danger"
-        : label === "Pending"
-          ? "badge badge-warning"
-          : "badge badge-neutral";
-  return <span className={cls}>{label}</span>;
+const COLUMNS = [
+  ["Candidate", styles.colCandidate],
+  ["Passport No", styles.colPassport],
+  ["Status", styles.colStatus],
+  ["Agent", styles.colAgent],
+  ["Group", styles.colGroup],
+  ["Agency", styles.colAgency],
+  ["Company", styles.colCompany],
+  ["License Position", styles.colLicense],
+  ["Company Status", styles.colCompanyStatus],
+  ["ARC NO.", styles.colArc],
+  ["MP/Visa", styles.colVisa],
+  ["Labour Expire", styles.colLabour],
+  ["Live Status", styles.colLive],
+  ["Payment", styles.colPayment],
+  ["Actions", styles.colActions],
+] as const;
+
+const BADGE_TONE: Record<StatusTone, string> = {
+  success: styles.success,
+  warning: styles.warning,
+  danger: styles.danger,
+  info: styles.info,
+  neutral: styles.neutral,
+};
+
+function CellValue({ value, mono = false, lines = 1 }: { value: string; mono?: boolean; lines?: 1 | 2 }) {
+  const text = value.trim();
+  if (!text) return <span className={styles.missing}>—</span>;
+  const className = [lines === 2 ? styles.clamp : styles.clip, mono ? styles.mono : ""]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <span className={className} title={text}>
+      {text}
+    </span>
+  );
+}
+
+function BoardBadge({ value, live = false }: { value: string; live?: boolean }) {
+  const text = value.trim();
+  if (!text || text === "—") return <span className={styles.missing}>—</span>;
+  const tone = statusTone(text);
+  if (!tone) return <CellValue value={text} />;
+  return (
+    <span className={[styles.badge, BADGE_TONE[tone], live ? styles.live : ""].filter(Boolean).join(" ")} title={text}>
+      <span className={styles.dot} aria-hidden />
+      <span className={styles.badgeLabel}>{text}</span>
+    </span>
+  );
+}
+
+function ContactLine({
+  icon: Icon,
+  label,
+  value,
+  className,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  className: string;
+}) {
+  const text = value.trim();
+  return (
+    <span className={`${styles.metaItem} ${className}`} title={text || undefined}>
+      <Icon className={styles.metaIcon} aria-hidden />
+      <span className="sr-only">{label}</span>
+      {text ? <span className={styles.metaText}>{text}</span> : <span className={styles.missing}>—</span>}
+    </span>
+  );
 }
 
 export function CandidateBoard({
@@ -89,184 +172,183 @@ export function CandidateBoard({
   const from = total === 0 ? 0 : (page - 1) * CANDIDATE_PAGE_SIZE + 1;
   const to = Math.min(page * CANDIDATE_PAGE_SIZE, total);
   const pages = Math.max(1, Math.ceil(total / CANDIDATE_PAGE_SIZE));
+  const filtered = Boolean(
+    filters.q ||
+      (filters.field && filters.field !== "name") ||
+      filters.group ||
+      filters.agent ||
+      filters.agency ||
+      filters.company ||
+      filters.position,
+  );
 
   return (
-    <section className="space-y-5">
-      {/* Page header */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Directory</p>
-          <h1 className="page-title mt-1">Candidates</h1>
-        </div>
-        {canCreate ? (
-          <Link href="/records/candidates/new" className="btn-primary">
-            <Plus className="h-3.5 w-3.5" />
-            Add New
+    <ListingShell
+      title="Candidates"
+      description={listingDescription("candidates", "Candidates")}
+      count={listingCountLabel("Candidates", from, to, total)}
+      action={
+        canCreate ? (
+          <Link href={`/records/candidates${queryString(filters, page)}${queryString(filters, page) ? "&" : "?"}create=1`} scroll={false} className="listing-cta">
+            <Plus className="h-4 w-4" />
+            {addLabel("Candidates")}
           </Link>
-        ) : null}
-      </div>
-
-      {/* Filters */}
-      <form className="surface grid gap-4 p-4 md:grid-cols-3 xl:grid-cols-6" action="/records/candidates">
-        {showGroupAndAgent ? (
-          <SelectFilter name="group" label="All Groups" value={filters.group} options={options.groups} />
-        ) : null}
-        {showGroupAndAgent ? (
-          <SelectFilter name="agent" label="All Agents" value={filters.agent} options={options.agents} />
-        ) : null}
-        <SelectFilter name="agency" label="All Agencies" value={filters.agency} options={options.agencies} />
-        <SelectFilter name="company" label="All Company" value={filters.company} options={options.companies} />
-        <SelectFilter
-          name="position"
-          label="All Licence Positions"
-          value={filters.position}
-          options={options.positions}
-        />
-        <label className="grid gap-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-          Search field
-          <select name="field" defaultValue={filters.field || "name"} className="control text-[13px] normal-case tracking-normal font-normal">
-            <option value="code">Code</option>
-            <option value="name">Name</option>
-            <option value="email">Email</option>
-            <option value="mobile">Mobile</option>
-            <option value="passport_no">Passport No</option>
-            <option value="status">Status</option>
-          </select>
-        </label>
-        <label className="grid gap-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted md:col-span-2">
-          Search
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+        ) : null
+      }
+      toolbar={
+        <form className="listing-toolbar" action="/records/candidates">
+          <label className="listing-search">
+            <span className="sr-only">Search</span>
+            <Search className="listing-search-icon" />
             <input
               name="q"
               defaultValue={filters.q}
               placeholder="Name, code, passport, mobile, email"
-              className="control pl-8 text-[13px] normal-case tracking-normal font-normal"
+              className="listing-field"
             />
-          </div>
-        </label>
-        <div className="flex items-end">
-          <button type="submit" className="btn-primary">
+          </label>
+          <label className="listing-select">
+            <span className="sr-only">Search field</span>
+            <select name="field" defaultValue={filters.field || "name"} className="listing-field" aria-label="Search field">
+              <option value="code">Code</option>
+              <option value="name">Name</option>
+              <option value="email">Email</option>
+              <option value="mobile">Mobile</option>
+              <option value="passport_no">Passport No</option>
+              <option value="status">Status</option>
+            </select>
+          </label>
+          {showGroupAndAgent ? (
+            <SelectFilter name="group" label="All Groups" value={filters.group} options={options.groups} />
+          ) : null}
+          {showGroupAndAgent ? (
+            <SelectFilter name="agent" label="All Agents" value={filters.agent} options={options.agents} />
+          ) : null}
+          <SelectFilter name="agency" label="All Agencies" value={filters.agency} options={options.agencies} />
+          <SelectFilter name="company" label="All Company" value={filters.company} options={options.companies} />
+          <SelectFilter
+            name="position"
+            label="All Licence Positions"
+            value={filters.position}
+            options={options.positions}
+          />
+          <button type="submit" className="listing-btn">
             Search
           </button>
-        </div>
-      </form>
-
-      {/* Table */}
-      <div className="surface overflow-x-auto">
-        <table className="data-grid min-w-[1400px]">
-          <thead>
+          {filtered ? (
+            <Link href="/records/candidates" className="listing-clear">
+              Clear all
+            </Link>
+          ) : null}
+        </form>
+      }
+      footer={
+        <ListingPager
+          page={page}
+          pages={pages}
+          previousHref={page > 1 ? `/records/candidates${queryString(filters, page - 1)}` : null}
+          nextHref={page < pages ? `/records/candidates${queryString(filters, page + 1)}` : null}
+        />
+      }
+    >
+      <table className={`listing-table ${styles.table}`}>
+        <colgroup>
+          {COLUMNS.map(([label, column]) => (
+            <col key={label} className={column} />
+          ))}
+        </colgroup>
+        <thead>
+          <tr>
+            {COLUMNS.map(([label]) => (
+              <th key={label} scope="col" title={label}>
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 ? (
             <tr>
-              {[
-                "Candidate",
-                "Passport No",
-                "Status",
-                "Agent",
-                "Group",
-                "Agency",
-                "Company",
-                "License Position",
-                "Company Status",
-                "ARC NO.",
-                "MP/Visa",
-                "Labour Expire",
-                "Live Status",
-                "Payment",
-                "Actions",
-              ].map((heading) => (
-                <th key={heading}>{heading}</th>
-              ))}
+              <td className="listing-empty-cell" colSpan={COLUMNS.length}>
+                <p className="text-[13px] font-medium text-[var(--listing-muted)]">No candidates found</p>
+                <p className="mt-1 text-[12px] text-[var(--listing-faint)]">
+                  {filters.q ? "Try adjusting your search terms." : "No candidates match your current filters."}
+                </p>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={15}>
-                  <div className="py-12 text-center">
-                    <p className="text-[13px] font-medium text-muted">No candidates found</p>
-                    <p className="mt-1 text-[12px] text-muted/70">
-                      {filters.q ? "Try adjusting your search terms." : "No candidates match your current filters."}
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td>
-                  <div className="flex items-center gap-3">
-                    <Portrait path={row.photo} name={row.name} className="h-14 w-11 shrink-0 rounded-lg" />
-                    <div>
-                      <Link
-                        href={`/records/candidates/${row.id}`}
-                        className="font-semibold text-accent hover:underline"
-                      >
-                        ({row.code || row.id}) {row.name}
-                      </Link>
-                      <p className="mt-0.5 text-xs text-muted">Email: {row.email || "—"}</p>
-                      <p className="text-xs text-muted">Mobile: {row.mobile || "—"}</p>
+          ) : null}
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td className={styles.candidate}>
+                <div className={styles.profile}>
+                  <Portrait path={row.photo} name={row.name} className={styles.avatar} />
+                  <div className={styles.profileBody}>
+                    <Link href={`/records/candidates/${row.id}`} className={styles.identity}>
+                      <span className={styles.name} title={row.name || undefined}>
+                        {row.name || "—"}
+                      </span>
+                      <span className={styles.code}>{row.code || row.id}</span>
+                    </Link>
+                    <div className={styles.meta}>
+                      <ContactLine icon={Mail} label="Email" value={row.email} className={styles.metaEmail} />
+                      <span className={styles.metaRule} aria-hidden />
+                      <ContactLine icon={Phone} label="Mobile" value={row.mobile} className={styles.metaPhone} />
                     </div>
                   </div>
-                </td>
-                <td className="font-mono text-[12.5px]">{row.passportNo || "—"}</td>
-                <td>
-                  <StatusBadge status={row.status} />
-                </td>
-                <td>{row.agentLabel || "—"}</td>
-                <td>{row.groupLabel || "—"}</td>
-                <td>{row.agencyName || "—"}</td>
-                <td>{row.companyName || "—"}</td>
-                <td>{row.licensePosition || "—"}</td>
-                <td>{row.companyStatus || "—"}</td>
-                <td className="font-mono text-[12.5px]">{row.arcNo || "—"}</td>
-                <td>{row.visaMp || "—"}</td>
-                <td>{row.labourExpire || "—"}</td>
-                <td>{row.liveStatus}</td>
-                <td>{row.paymentLabel || "—"}</td>
-                <td>
-                  <RowActions slug="candidates" id={row.id} canEdit={canEdit} canDelete={canDelete} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[12.5px] text-muted">
-          {total === 0 ? (
-            "No results"
-          ) : (
-            <>
-              Showing <span className="font-medium text-foreground">{from}</span>–
-              <span className="font-medium text-foreground">{to}</span> of{" "}
-              <span className="font-medium text-foreground">{total.toLocaleString()}</span>
-            </>
-          )}
-        </p>
-        <div className="flex items-center gap-2">
-          {page > 1 ? (
-            <Link
-              href={`/records/candidates${queryString(filters, page - 1)}`}
-              className="btn-quiet h-9"
-            >
-              ← Previous
-            </Link>
-          ) : null}
-          <span className="rounded-lg border border-border bg-card px-3 py-1.5 text-[12.5px] font-medium">
-            {page} / {pages}
-          </span>
-          {page < pages ? (
-            <Link
-              href={`/records/candidates${queryString(filters, page + 1)}`}
-              className="btn-quiet h-9"
-            >
-              Next →
-            </Link>
-          ) : null}
-        </div>
-      </div>
-    </section>
+                </div>
+              </td>
+              <td>
+                <CellValue value={row.passportNo} mono />
+              </td>
+              <td>
+                <BoardBadge value={statusLabel(row.status) || row.status || "—"} />
+              </td>
+              <td>
+                <CellValue value={row.agentLabel} lines={2} />
+              </td>
+              <td>
+                <CellValue value={row.groupLabel} lines={2} />
+              </td>
+              <td>
+                <CellValue value={row.agencyName} lines={2} />
+              </td>
+              <td>
+                <CellValue value={row.companyName} lines={2} />
+              </td>
+              <td>
+                <CellValue value={row.licensePosition} lines={2} />
+              </td>
+              <td>
+                <BoardBadge value={row.companyStatus || "—"} />
+              </td>
+              <td>
+                <CellValue value={row.arcNo} mono />
+              </td>
+              <td>
+                <CellValue value={row.visaMp} mono />
+              </td>
+              <td>
+                <CellValue value={row.labourExpire} mono />
+              </td>
+              <td>
+                <BoardBadge value={row.liveStatus || "—"} live />
+              </td>
+              <td>
+                <BoardBadge value={row.paymentLabel || "—"} />
+              </td>
+              <td className="listing-actions-cell">
+                <RowActions
+                  slug="candidates"
+                  id={row.id}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  appearance="icons"
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </ListingShell>
   );
 }

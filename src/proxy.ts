@@ -8,12 +8,21 @@ const PUBLIC_PAGES = new Set(["/", "/about", "/faq", "/contact", "/candidates", 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname) || PUBLIC_PAGES.has(pathname)) return true;
   if (pathname.startsWith("/jobs/") || pathname.startsWith("/news/")) return true;
+  if (pathname === "/api/media") return true;
   if (pathname.startsWith("/_next")) return true;
   return false;
 }
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname === "/candidate/login") {
+    const login = new URL("/login", request.url);
+    const next = request.nextUrl.searchParams.get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/candidate/login")) {
+      login.searchParams.set("next", next);
+    }
+    return NextResponse.redirect(login);
+  }
   if (isPublic(pathname)) return NextResponse.next();
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
